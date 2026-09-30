@@ -1,0 +1,154 @@
+/* ============================================================================
+   LOGIN · pantalla dividida
+   ============================================================================
+   Imágenes en public/: FONDO_LOGIN.jpeg y LOGO_CHANITOS.png.
+   Si la foto falta, queda el degradado verde de respaldo.
+   ============================================================================ */
+
+.login {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    background: var(--verde-900);
+}
+
+/* ---- Foto ---- */
+.login__portada {
+    position: relative;
+    background:
+        linear-gradient(135deg, rgba(15, 61, 46, 0.55), rgba(15, 61, 46, 0.15)),
+        url("/FONDO_LOGIN.jpeg") center / cover no-repeat,
+        linear-gradient(135deg, var(--verde-900), var(--verde-500));
+}
+
+.login__portada-velo {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 48px;
+    color: #fff;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+}
+
+.login__marca {
+    display: inline-block;
+    padding: 4px 12px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+}
+
+.login__portada-velo h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.9rem, 3vw, 2.8rem);
+    line-height: 1.1;
+}
+
+.login__portada-velo p { margin: 0; max-width: 420px; opacity: 0.9; }
+
+/* ---- Panel del formulario ---- */
+.login__panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    background: var(--gris-100);
+}
+
+.login__form {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 36px 32px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--sombra);
+}
+
+.login__encabezado { text-align: center; }
+
+.login__logo {
+    display: block;
+    max-width: 170px;
+    max-height: 90px;
+    margin: 0 auto 14px;
+    object-fit: contain;
+}
+
+.login__encabezado h2 { margin: 0; font-size: 1.5rem; }
+.login__encabezado p { margin: 4px 0 0; color: var(--gris-600); font-size: 0.92rem; }
+
+/* ---- Campos ---- */
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gris-600);
+}
+
+.campo input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    font-size: 1rem;
+    color: var(--gris-900);
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.campo input:focus {
+    border-color: var(--verde-500);
+    box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
+}
+
+.campo__password { position: relative; }
+.campo__password input { padding-right: 84px; }
+
+.campo__ojo {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--verde-700);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.campo__ojo:hover { background: var(--verde-100); }
+
+.login__recordar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--gris-600);
+    cursor: pointer;
+}
+.login__recordar input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+
+.login__pie { margin: 0; text-align: center; font-size: 0.82rem; color: var(--gris-600); }
+
+/* ---- Tablet vertical y celular: solo el formulario, con la foto de fondo ---- */
+@media (max-width: 900px) {
+    .login { grid-template-columns: 1fr; }
+    .login__portada { display: none; }
+    .login__panel {
+        background:
+            linear-gradient(160deg, rgba(15, 61, 46, 0.85), rgba(27, 94, 69, 0.85)),
+            url("/FONDO_LOGIN.jpeg") center / cover no-repeat;
+    }
+}
