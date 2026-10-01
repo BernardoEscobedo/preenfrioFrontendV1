@@ -7,6 +7,7 @@ import RutaProtegida from "./components/RutaProtegida";
 import MainLayout from "./layouts/MainLayout";
 import { RUTAS_MENU } from "./config/menu";
 import Empleados from "./pages/catalogos/Empleados";
+import Camaras from "./pages/catalogos/Camaras";
 import Usuarios from "./pages/Usuarios";
 
 // ============================================================================
@@ -23,6 +24,7 @@ import Usuarios from "./pages/Usuarios";
 
 const MODULOS: Record<string, ReactElement> = {
     "/catalogos/empleados": <Empleados />,
+    "/catalogos/camaras": <Camaras />,
     "/usuarios": <Usuarios />
 };
 
