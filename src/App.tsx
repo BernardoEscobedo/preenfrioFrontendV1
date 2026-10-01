@@ -8,21 +8,18 @@ import MainLayout from "./layouts/MainLayout";
 import { RUTAS_MENU } from "./config/menu";
 import Empleados from "./pages/catalogos/Empleados";
 import Camaras from "./pages/catalogos/Camaras";
+import Productores from "./pages/catalogos/Productores";
 import Usuarios from "./pages/Usuarios";
 
 // ============================================================================
 // RUTAS
 // ============================================================================
-//   /login            pública
-//   /                 dashboard (con menú lateral)
-//   resto del menú    generadas desde config/menu.ts, cada una protegida
-//                     con el rol mínimo de su opción
-//
 // PARA AGREGAR UN MÓDULO NUEVO: solo se agrega una línea en MODULOS con su
 // ruta (la misma de menu.ts). Lo que no esté aquí muestra "en construcción".
 // ============================================================================
 
 const MODULOS: Record<string, ReactElement> = {
+    "/catalogos/productores": <Productores />,
     "/catalogos/empleados": <Empleados />,
     "/catalogos/camaras": <Camaras />,
     "/usuarios": <Usuarios />
