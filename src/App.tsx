@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import type { ReactElement } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PaginaPendiente from "./pages/PaginaPendiente";
 import RutaProtegida from "./components/RutaProtegida";
 import MainLayout from "./layouts/MainLayout";
 import { RUTAS_MENU } from "./config/menu";
+import Empleados from "./pages/catalogos/Empleados";
 
 // ============================================================================
 // RUTAS
@@ -14,12 +16,15 @@ import { RUTAS_MENU } from "./config/menu";
 //   resto del menú    generadas desde config/menu.ts, cada una protegida
 //                     con el rol mínimo de su opción
 //
-// Cuando se construya un módulo, se agrega su Route ANTES del map y se
-// quita de la lista de pendientes, por ejemplo:
-//   <Route path="/recepciones" element={<Recepciones />} />
+// PARA AGREGAR UN MÓDULO NUEVO: solo se agrega una línea en MODULOS con su
+// ruta (la misma de menu.ts). Lo que no esté aquí muestra "en construcción".
 // ============================================================================
 
-const PENDIENTES = RUTAS_MENU.filter((r) => r.ruta !== "/");
+const MODULOS: Record<string, ReactElement> = {
+    "/catalogos/empleados": <Empleados />
+};
+
+const RUTAS = RUTAS_MENU.filter((r) => r.ruta !== "/");
 
 export default function App() {
     return (
@@ -30,9 +35,12 @@ export default function App() {
                 <Route element={<MainLayout />}>
                     <Route index element={<Dashboard />} />
 
-                    {PENDIENTES.map((r) => (
+                    {RUTAS.map((r) => (
                         <Route key={r.ruta} element={<RutaProtegida rolMinimo={r.rolMinimo} />}>
-                            <Route path={r.ruta} element={<PaginaPendiente titulo={r.etiqueta} />} />
+                            <Route
+                                path={r.ruta}
+                                element={MODULOS[r.ruta] ?? <PaginaPendiente titulo={r.etiqueta} />}
+                            />
                         </Route>
                     ))}
                 </Route>

@@ -1,17 +1,53 @@
 /* ============================================================================
-   MARCO · menú lateral + encabezado de página
+   MARCO · menú lateral + encabezado de página + fondo ilustrado
    ============================================================================
-   Imágenes en public/: SIDEBAR_DASHBOARD.jpg y HEADER_DASHBOARD.jpg.
-   Las dos llevan velo verde oscuro encima para que el texto se lea siempre.
+   Imágenes en public/:
+     SIDEBAR_DASHBOARD.jpg   fondo del menú lateral
+     HEADER_DASHBOARD.jpg    fondo del encabezado de cada página
+     FONDO_PAGINA.png        ilustración del Soconusco al pie de la página
    ============================================================================ */
 
 :root {
     --ancho-sidebar: 260px;
+
+    /* ⚙️ Ajustes del fondo ilustrado */
+    --fondo-opacidad: 0.4;      /* 0.3 más tenue · 0.55 más visible */
+    --fondo-altura: 62vh;       /* cuánto sube el dibujo desde abajo */
 }
 
 .app { min-height: 100vh; }
 
+/* ---------------------------------------------------------------------------
+   FONDO ILUSTRADO
+   ---------------------------------------------------------------------------
+   Va en una capa aparte (::before) para poder bajarle la opacidad sin
+   afectar al contenido.
+
+   · position: fixed  → el dibujo se queda pegado abajo al hacer scroll, así
+     las páginas largas no lo arrastran fuera de la pantalla.
+   · mask-image       → desvanece el borde de arriba. Si la imagen trae la
+     parte superior en negro en lugar de transparente, el negro tampoco se
+     ve: la máscara lo borra.
+   · pointer-events   → la capa nunca roba clics.
+   --------------------------------------------------------------------------- */
+.app::before {
+    content: "";
+    position: fixed;
+    left: var(--ancho-sidebar);
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    height: var(--fondo-altura);
+    pointer-events: none;
+    background: url("/FONDO_PAGINA.png") center bottom / cover no-repeat;
+    opacity: var(--fondo-opacidad);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 38%, #000 62%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 38%, #000 62%);
+}
+
 .app__contenido {
+    position: relative;
+    z-index: 1;
     margin-left: var(--ancho-sidebar);
     padding: 24px 28px 40px;
     min-height: 100vh;
@@ -211,7 +247,6 @@
     color: #fff;
     border-radius: 18px;
     overflow: hidden;
-    /* La pared oscura de la foto queda a la izquierda: ahí va el saludo */
     background:
         linear-gradient(90deg, rgba(5, 26, 21, 0.92) 0%, rgba(5, 26, 21, 0.72) 45%, rgba(5, 26, 21, 0.35) 100%),
         url("/HEADER_DASHBOARD.jpeg") center 60% / cover no-repeat,
@@ -268,6 +303,9 @@
 @media (max-width: 1024px) {
     .app__contenido { margin-left: 0; padding: 74px 16px 32px; }
 
+    /* Sin menú fijo, el dibujo ocupa todo el ancho */
+    .app::before { left: 0; --fondo-altura: 45vh; }
+
     .sidebar { transform: translateX(-100%); }
     .sidebar--abierto { transform: translateX(0); }
     .sidebar__cerrar { display: block; }
@@ -287,4 +325,9 @@
     .app__hamburguesa { display: inline-flex; }
 
     .encabezado { min-height: 130px; padding: 22px 20px; }
+}
+
+/* En celular el dibujo se recortaría demasiado: se quita */
+@media (max-width: 600px) {
+    .app::before { display: none; }
 }

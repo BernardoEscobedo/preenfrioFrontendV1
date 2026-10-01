@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
     AlertTriangle,
@@ -19,7 +19,7 @@ import EncabezadoPagina from "../components/layout/EncabezadoPagina";
 import KpiCard from "../components/dashboard/KpiCard";
 import CamaraCard, { estadoCamara } from "../components/dashboard/CamaraCard";
 import { num } from "../types/dashboard";
-import type { DatosDashboard } from "../types/dashboard";
+import type { CamaraTablero, DatosDashboard } from "../types/dashboard";
 import "../styles/dashboard.css";
 
 // ============================================================================
@@ -31,12 +31,13 @@ import "../styles/dashboard.css";
 //   ② Estado de cámaras semáforo por cámara
 //   ③ Tres paneles      por recibir · atención inmediata · despachos
 //
-// Todo llega ya filtrado por alcance desde el backend. El selector de planta
-// (solo coordinador y admin) filtra además en el navegador.
+// Todo llega ya filtrado por alcance desde el backend. El selector de
+// PREENFRÍO (solo coordinador y admin) filtra además en el navegador:
+// al elegir "Nelly" se ven su preenfrío y su conservación.
 // ============================================================================
 
 const ZONA = "America/Mexico_City";
-const TODAS = "TODAS";
+const TODOS = "TODOS";
 const MAX_FILAS = 6;
 
 // ----------------------------------------------------------------------------
@@ -44,6 +45,10 @@ const MAX_FILAS = 6;
 // ----------------------------------------------------------------------------
 
 const capitalizar = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** "doña nelly" → "Doña Nelly" */
+const tipoTitulo = (t: string) =>
+    t.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 
 const fechaLarga = (d: Date) =>
     capitalizar(
@@ -89,7 +94,54 @@ const fechaCorta = (valor: string | null) => {
 };
 
 // ----------------------------------------------------------------------------
-// Filtro por planta y cálculo de indicadores
+// Agrupación por PREENFRÍO
+// ----------------------------------------------------------------------------
+// Las cámaras se agrupan por el SITIO que viene en su nombre:
+//
+//   "PREENFRIO NELLY"        → NELLY
+//   "CONSERVACION NELLY"     → NELLY
+//   "PREENFRÍO FORTALEZA"    → FORTALEZA
+//   "Conservación Fortaleza" → FORTALEZA
+//
+// Se quita la palabra del tipo (preenfrío / conservación / conserva) sin
+// importar mayúsculas, acentos ni guiones. Así, cuando den de alta un
+// preenfrío nuevo con el mismo formato, aparece solo en el selector.
+//
+// Si una cámara se llama distinto (por ejemplo "CAMARA 3"), se agrupa por su
+// ubicación para que nunca quede fuera del selector.
+// ----------------------------------------------------------------------------
+
+// Acepta el tipo con o sin acento. Se trabaja sobre el nombre original para
+// no perder la Ñ ("DOÑA NELLY" se queda como DOÑA, no como DONA).
+const PREFIJO_TIPO =
+    /^\s*(pre\s*-?\s*enfr[ií]amiento|pre\s*-?\s*enfr[ií]o|conservaci[oó]n|conserva)(?=[\s\-_:]|$)[\s\-_:]*/i;
+
+/** Clave del sitio de una cámara: "NELLY", "FORTALEZA"... */
+const claveSitio = (c: CamaraTablero): string => {
+    const limpio = c.nombre_camara.replace(PREFIJO_TIPO, "").trim();
+    return (limpio || c.ubicacion).toUpperCase();
+};
+
+interface Sitio {
+    clave: string;
+    etiqueta: string;
+}
+
+const sitiosDisponibles = (camaras: CamaraTablero[]): Sitio[] => {
+    const mapa = new Map<string, string>();
+
+    for (const c of camaras) {
+        const clave = claveSitio(c);
+        if (!mapa.has(clave)) mapa.set(clave, tipoTitulo(clave));
+    }
+
+    return [...mapa.entries()]
+        .map(([clave, etiqueta]) => ({ clave, etiqueta }))
+        .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, "es"));
+};
+
+// ----------------------------------------------------------------------------
+// Filtro y cálculo de indicadores
 // ----------------------------------------------------------------------------
 
 interface ItemAtencion {
@@ -110,18 +162,18 @@ const ETIQUETA_CRITICIDAD = {
 
 const ORDEN_ESTADO = { saturada: 0, mantenimiento: 1, alta: 2, normal: 3 } as const;
 
-const calcularVista = (datos: DatosDashboard | null, planta: string) => {
+const calcularVista = (datos: DatosDashboard | null, sitio: string) => {
     if (!datos) return null;
 
     const camaras =
-        planta === TODAS ? datos.camaras : datos.camaras.filter((c) => c.ubicacion === planta);
+        sitio === TODOS ? datos.camaras : datos.camaras.filter((c) => claveSitio(c) === sitio);
 
     const ids = new Set(camaras.map((c) => c.id_camara));
-    const enPlanta = (id: number | null) => (planta === TODAS ? true : id !== null && ids.has(id));
+    const delSitio = (id: number | null) => (sitio === TODOS ? true : id !== null && ids.has(id));
 
-    const criticas = datos.criticas.filter((c) => enPlanta(c.id_camara));
-    const esperadas = datos.esperadas.filter((e) => enPlanta(e.id_camara));
-    const mantenimientos = datos.mantenimientos.filter((m) => enPlanta(m.id_camara));
+    const criticas = datos.criticas.filter((c) => delSitio(c.id_camara));
+    const esperadas = datos.esperadas.filter((e) => delSitio(e.id_camara));
+    const mantenimientos = datos.mantenimientos.filter((m) => delSitio(m.id_camara));
 
     // ---- KPIs ----
     // La ocupación solo cuenta cámaras operativas: una en mantenimiento no
@@ -176,13 +228,17 @@ const calcularVista = (datos: DatosDashboard | null, planta: string) => {
         }))
     ];
 
-    // Las cámaras que necesitan acción van primero
-    const camarasOrdenadas = [...camaras].sort(
-        (a, b) =>
-            num(b.procesos_criticos_en_cola) - num(a.procesos_criticos_en_cola) ||
-            ORDEN_ESTADO[estadoCamara(a)] - ORDEN_ESTADO[estadoCamara(b)] ||
-            a.tipo_camara - b.tipo_camara ||
-            a.nombre_camara.localeCompare(b.nombre_camara)
+    // ---- Orden de las tarjetas ----
+    // Con "Todos": agrupadas por sitio (Fortaleza preenfrío, Fortaleza
+    //              conserva, Nelly preenfrío, Nelly conserva...), y dentro
+    //              de cada sitio el preenfrío primero.
+    // Con un sitio: lo urgente primero.
+    const camarasOrdenadas = [...camaras].sort((a, b) =>
+        sitio === TODOS
+            ? claveSitio(a).localeCompare(claveSitio(b), "es") || a.tipo_camara - b.tipo_camara
+            : num(b.procesos_criticos_en_cola) - num(a.procesos_criticos_en_cola) ||
+              ORDEN_ESTADO[estadoCamara(a)] - ORDEN_ESTADO[estadoCamara(b)] ||
+              a.tipo_camara - b.tipo_camara
     );
 
     return {
@@ -203,21 +259,39 @@ const calcularVista = (datos: DatosDashboard | null, planta: string) => {
 // Página
 // ----------------------------------------------------------------------------
 
+const CLAVE_SITIO = "preenfrio_dashboard_sitio";
+
 export default function Dashboard() {
     const { usuario } = useAuth();
     const { datos, cargando, refrescando, actualizado, fallas, sinConexion, refrescar } = useDashboard();
     const ahora = useReloj();
-    const [planta, setPlanta] = useState(TODAS);
 
-    const verPlantas = usuario !== null && usuario.id_role <= ROLES.COORDINADOR;
+    // El preenfrío elegido se recuerda: al volver al dashboard sigue en Nelly
+    const [sitio, setSitio] = useState<string>(() => localStorage.getItem(CLAVE_SITIO) ?? TODOS);
 
-    const plantas = useMemo(
-        () => [...new Set((datos?.camaras ?? []).map((c) => c.ubicacion))].sort(),
-        [datos]
-    );
+    const verSelector = usuario !== null && usuario.id_role <= ROLES.COORDINADOR;
 
-    const vista = useMemo(() => calcularVista(datos, planta), [datos, planta]);
+    const sitios = useMemo(() => sitiosDisponibles(datos?.camaras ?? []), [datos]);
 
+    // Si el sitio guardado ya no existe (se dio de baja), se regresa a Todos
+    useEffect(() => {
+        if (datos && sitio !== TODOS && !sitios.some((s) => s.clave === sitio)) {
+            setSitio(TODOS);
+        }
+    }, [datos, sitio, sitios]);
+
+    const cambiarSitio = (valor: string) => {
+        setSitio(valor);
+        localStorage.setItem(CLAVE_SITIO, valor);
+    };
+
+    // Supervisores y operativos no ven el selector: el backend ya les manda
+    // solo sus cámaras, así que siempre se calcula con "Todos".
+    const sitioActivo = verSelector ? sitio : TODOS;
+
+    const vista = useMemo(() => calcularVista(datos, sitioActivo), [datos, sitioActivo]);
+
+    const etiquetaSitio = sitios.find((s) => s.clave === sitioActivo)?.etiqueta;
     const nombre = usuario?.nombre_empleado || usuario?.usuario || "";
     const despachos = datos?.despachos ?? [];
 
@@ -243,17 +317,17 @@ export default function Dashboard() {
                     <span>Actualizado {haceCuanto(actualizado, ahora)}</span>
                 </button>
 
-                {verPlantas && plantas.length > 1 && (
+                {verSelector && sitios.length > 1 && (
                     <select
                         className="selector-encabezado"
-                        value={planta}
-                        onChange={(e) => setPlanta(e.target.value)}
-                        aria-label="Planta"
+                        value={sitioActivo}
+                        onChange={(e) => cambiarSitio(e.target.value)}
+                        aria-label="Preenfrío"
                     >
-                        <option value={TODAS}>Todas las plantas</option>
-                        {plantas.map((p) => (
-                            <option key={p} value={p}>
-                                {p}
+                        <option value={TODOS}>Todos los preenfríos</option>
+                        {sitios.map((s) => (
+                            <option key={s.clave} value={s.clave}>
+                                {s.etiqueta}
                             </option>
                         ))}
                     </select>
@@ -328,7 +402,10 @@ export default function Dashboard() {
                     {/* ② Cámaras */}
                     <section className="panel">
                         <div className="panel__cabeza">
-                            <h2>Estado de cámaras</h2>
+                            <h2>
+                                Estado de cámaras
+                                {etiquetaSitio ? ` · ${etiquetaSitio}` : ""}
+                            </h2>
                             <ul className="leyenda">
                                 <li><span className="punto punto--normal" />Normal</li>
                                 <li><span className="punto punto--alta" />Alta ocupación</li>
