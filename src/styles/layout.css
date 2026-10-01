@@ -1,0 +1,290 @@
+/* ============================================================================
+   MARCO · menú lateral + encabezado de página
+   ============================================================================
+   Imágenes en public/: SIDEBAR_DASHBOARD.jpg y HEADER_DASHBOARD.jpg.
+   Las dos llevan velo verde oscuro encima para que el texto se lea siempre.
+   ============================================================================ */
+
+:root {
+    --ancho-sidebar: 260px;
+}
+
+.app { min-height: 100vh; }
+
+.app__contenido {
+    margin-left: var(--ancho-sidebar);
+    padding: 24px 28px 40px;
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------------------
+   MENÚ LATERAL
+   --------------------------------------------------------------------------- */
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: var(--ancho-sidebar);
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    background:
+        linear-gradient(180deg, rgba(5, 26, 21, 0.82) 0%, rgba(5, 26, 21, 0.9) 60%, rgba(5, 26, 21, 0.96) 100%),
+        url("/SIDEBAR_DASHBOARD.jpeg") center / cover no-repeat,
+        var(--verde-900);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+    transition: transform 0.25s ease;
+}
+
+.sidebar__marca {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 22px 18px 18px;
+}
+
+.sidebar__marca img {
+    max-width: 150px;
+    max-height: 70px;
+    padding: 8px 14px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+}
+
+.sidebar__cerrar {
+    display: none;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    padding: 6px;
+    color: #fff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.sidebar__nav {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 12px;
+}
+
+.sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.86);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.sidebar__item span { flex: 1; text-align: left; }
+
+.sidebar__item:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+
+.sidebar__item--activo,
+.sidebar__item--activo:hover {
+    color: #fff;
+    background: linear-gradient(90deg, var(--verde-500), var(--verde-700));
+    box-shadow: 0 4px 14px rgba(46, 139, 87, 0.35);
+}
+
+.sidebar__item--padre-activo { color: #fff; }
+
+.sidebar__flecha { transition: transform 0.2s; }
+.sidebar__flecha--abierta { transform: rotate(180deg); }
+
+.sidebar__hijos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 2px 0 6px 26px;
+    padding-left: 14px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar__hijo {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    border-radius: 8px;
+}
+.sidebar__hijo:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.sidebar__hijo--activo { color: #fff; font-weight: 600; background: rgba(46, 139, 87, 0.35); }
+
+.sidebar__pie {
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar__usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sidebar__usuario div { display: flex; flex-direction: column; min-width: 0; }
+
+.sidebar__usuario strong {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar__usuario small { font-size: 0.78rem; opacity: 0.7; }
+
+.sidebar__avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sidebar__salir {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+}
+.sidebar__salir:hover { color: #fff; background: rgba(192, 57, 43, 0.5); }
+
+.sidebar-velo { display: none; }
+
+.app__hamburguesa {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 30;
+    padding: 10px;
+    color: #fff;
+    background: var(--verde-900);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   ENCABEZADO DE PÁGINA
+   --------------------------------------------------------------------------- */
+.encabezado {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    min-height: 150px;
+    padding: 28px 30px;
+    margin-bottom: 22px;
+    color: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    /* La pared oscura de la foto queda a la izquierda: ahí va el saludo */
+    background:
+        linear-gradient(90deg, rgba(5, 26, 21, 0.92) 0%, rgba(5, 26, 21, 0.72) 45%, rgba(5, 26, 21, 0.35) 100%),
+        url("/HEADER_DASHBOARD.jpeg") center 60% / cover no-repeat,
+        var(--verde-900);
+    box-shadow: var(--sombra);
+}
+
+.encabezado__texto h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+    line-height: 1.15;
+}
+
+.encabezado__texto p { margin: 0; font-size: 0.98rem; opacity: 0.88; }
+
+.encabezado__acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.estado-red,
+.boton-encabezado,
+.selector-encabezado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+}
+
+.estado-red { color: #b8f0cf; }
+.estado-red--caida { color: #ffd2cc; background: rgba(192, 57, 43, 0.35); }
+
+.boton-encabezado { cursor: pointer; }
+.boton-encabezado:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+.boton-encabezado:disabled { cursor: progress; }
+
+.selector-encabezado { cursor: pointer; padding-right: 10px; }
+.selector-encabezado option { color: var(--gris-900); }
+
+.girando { animation: girar 0.9s linear infinite; }
+
+/* ---------------------------------------------------------------------------
+   PANTALLAS ANGOSTAS: el menú se vuelve cajón
+   --------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .app__contenido { margin-left: 0; padding: 74px 16px 32px; }
+
+    .sidebar { transform: translateX(-100%); }
+    .sidebar--abierto { transform: translateX(0); }
+    .sidebar__cerrar { display: block; }
+
+    .sidebar-velo {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 35;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+    }
+    .sidebar-velo--visible { opacity: 1; pointer-events: auto; }
+
+    .app__hamburguesa { display: inline-flex; }
+
+    .encabezado { min-height: 130px; padding: 22px 20px; }
+}
