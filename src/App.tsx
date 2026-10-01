@@ -6,9 +6,10 @@ import PaginaPendiente from "./pages/PaginaPendiente";
 import RutaProtegida from "./components/RutaProtegida";
 import MainLayout from "./layouts/MainLayout";
 import { RUTAS_MENU } from "./config/menu";
+import Productores from "./pages/catalogos/Productores";
+import Fincas from "./pages/catalogos/Fincas";
 import Empleados from "./pages/catalogos/Empleados";
 import Camaras from "./pages/catalogos/Camaras";
-import Productores from "./pages/catalogos/Productores";
 import Usuarios from "./pages/Usuarios";
 
 // ============================================================================
@@ -20,6 +21,7 @@ import Usuarios from "./pages/Usuarios";
 
 const MODULOS: Record<string, ReactElement> = {
     "/catalogos/productores": <Productores />,
+    "/catalogos/fincas": <Fincas />,
     "/catalogos/empleados": <Empleados />,
     "/catalogos/camaras": <Camaras />,
     "/usuarios": <Usuarios />

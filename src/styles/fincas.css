@@ -1,0 +1,112 @@
+/* ============================================================================
+   FINCAS · complementos de crud.css y usuarios.css
+   ============================================================================ */
+
+.mono { font-family: "Consolas", "Cascadia Mono", monospace; }
+
+/* ---- Mini KPI que funciona como filtro ---- */
+.mini-kpi--boton {
+    font: inherit;
+    text-align: left;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.mini-kpi--boton:hover { transform: translateY(-2px); }
+.mini-kpi--seleccionado { border-color: var(--verde-500); background: #f2faf5; }
+
+.zona-letra {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--verde-700);
+    background: var(--verde-100);
+    border-radius: 10px;
+}
+
+/* ---- Filtros activos ---- */
+.filtros-activos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -4px 0 14px;
+}
+.filtros-activos .enlace { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+
+/* ---- Celdas ---- */
+.celda-doble { display: flex; flex-direction: column; gap: 2px; }
+.celda-doble small { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--gris-600); }
+
+.lote-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--verde-900);
+    background: #fff8e1;
+    border: 1px dashed #e0b44a;
+    border-radius: 8px;
+}
+
+/* ---- Vista previa del lote en el formulario ---- */
+.lote-previa {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    text-align: center;
+    background: #fffaeb;
+    border: 1px dashed #e0b44a;
+    border-radius: 14px;
+}
+.lote-previa > span { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #8a6a1b; }
+.lote-previa strong { font-size: 1.7rem; letter-spacing: 0.08em; color: var(--verde-900); }
+.lote-previa strong em { font-style: normal; }
+.lote-previa strong small { font-size: 1rem; color: #c2a462; letter-spacing: 0.04em; }
+.lote-previa > small { font-size: 0.78rem; color: var(--gris-600); }
+.lote-previa__falta { color: #c9b27a; }
+
+/* ---- Selección de zona ---- */
+.zonas { margin: 0; padding: 0; border: none; }
+.zonas legend { margin-bottom: 6px; padding: 0; }
+.zonas__lista { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+.zona-opcion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-weight: 600;
+    color: var(--gris-900);
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.zona-opcion input { position: absolute; opacity: 0; pointer-events: none; }
+.zona-opcion:hover { border-color: var(--verde-500); }
+.zona-opcion__letra {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    font-weight: 700;
+    color: var(--gris-600);
+    background: var(--gris-100);
+    border-radius: 8px;
+}
+.zona-opcion--activa { background: #f2faf5; border-color: var(--verde-500); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.12); }
+.zona-opcion--activa .zona-opcion__letra { color: #fff; background: var(--verde-500); }
+
+@media (max-width: 760px) {
+    .zonas__lista { grid-template-columns: 1fr; }
+}
