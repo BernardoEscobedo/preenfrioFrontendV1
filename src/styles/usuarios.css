@@ -1,0 +1,185 @@
+/* ============================================================================
+   USUARIOS · complementos de crud.css
+   ============================================================================
+   Selects, roles con descripción, campo de contraseña y la lista de cámaras
+   de la zona de trabajo. Los selects y la contraseña sirven también para
+   los catálogos que vengan.
+   ============================================================================ */
+
+.crud__resumen--cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* ---- Selects ---- */
+.campo select,
+.selector {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 38px 0 14px;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--gris-900);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2352606d' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            right 14px center / 16px no-repeat,
+        #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 10px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+}
+.campo select:focus,
+.selector:focus { border-color: var(--verde-500); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15); }
+.campo--error select { border-color: var(--rojo); }
+
+.selector { width: auto; min-height: 44px; background-color: var(--gris-100); border-color: transparent; }
+
+.campo--completo { grid-column: 1 / -1; }
+.campo__ayuda { color: var(--gris-600); }
+
+.formulario--una { grid-template-columns: 1fr; }
+
+/* ---- Contraseña con ver/ocultar ---- */
+.clave { position: relative; }
+.clave input { padding-right: 48px; }
+.clave__ojo {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    padding: 8px;
+    color: var(--gris-600);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.clave__ojo:hover { color: var(--verde-700); background: var(--verde-100); }
+
+/* ---- Selección de rol ---- */
+.roles { margin: 0; padding: 0; border: none; }
+.roles legend { margin-bottom: 6px; padding: 0; }
+
+.roles__lista {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.rol-opcion {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    font-weight: 400;
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.rol-opcion:hover { border-color: var(--verde-500); }
+.rol-opcion input { position: absolute; opacity: 0; pointer-events: none; }
+.rol-opcion--activa { background: #f2faf5; border-color: var(--verde-500); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.12); }
+
+.rol-opcion__punto {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+    border-radius: 50%;
+}
+.rol-opcion__punto--1 { background: #6b46c1; }
+.rol-opcion__punto--2 { background: #2b6cb0; }
+.rol-opcion__punto--3 { background: var(--verde-500); }
+.rol-opcion__punto--4 { background: #b7791f; }
+
+.rol-opcion__texto { display: flex; flex-direction: column; gap: 2px; }
+.rol-opcion__texto strong { font-size: 0.92rem; color: var(--gris-900); }
+.rol-opcion__texto small { font-size: 0.78rem; line-height: 1.35; color: var(--gris-600); }
+
+/* ---- Chips de rol ---- */
+.chip--rol-1 { color: #553c9a; background: #efe9fb; }
+.chip--rol-2 { color: #2b6cb0; background: #e6f0fb; }
+.chip--rol-3 { color: var(--verde-700); background: var(--verde-100); }
+.chip--rol-4 { color: #975a16; background: #fdf1dc; }
+
+.chip--mini { margin-left: 8px; padding: 1px 7px; font-size: 0.68rem; vertical-align: middle; }
+
+.persona__avatar--rol-1 { color: #553c9a; background: #efe9fb; }
+.persona__avatar--rol-2 { color: #2b6cb0; background: #e6f0fb; }
+.persona__avatar--rol-4 { color: #975a16; background: #fdf1dc; }
+
+.estados { display: flex; flex-wrap: wrap; gap: 6px; }
+.texto-suave { color: var(--gris-600); }
+.icono-en-linea { vertical-align: -2px; }
+
+/* ---- Zona de trabajo ---- */
+.zona { display: flex; flex-direction: column; gap: 14px; }
+
+.zona__grupo {
+    padding: 14px;
+    background: var(--gris-100);
+    border-radius: 14px;
+}
+
+.zona__cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.zona__cabeza strong { font-size: 1rem; }
+
+.zona__atajo {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--verde-700);
+    background: #fff;
+    border: 1px solid var(--verde-100);
+    border-radius: 999px;
+    cursor: pointer;
+}
+.zona__atajo:hover:not(:disabled) { background: var(--verde-100); }
+
+.zona__camaras {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.zona__camara {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    color: var(--gris-600);
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.zona__camara input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+.zona__camara span { display: flex; flex-direction: column; min-width: 0; }
+.zona__camara strong { font-size: 0.9rem; color: var(--gris-900); }
+.zona__camara small { font-size: 0.76rem; }
+.zona__camara--activa { color: var(--verde-700); background: #f2faf5; border-color: var(--verde-500); }
+.zona__camara--baja { border-style: dashed; }
+.zona__camara--baja small { color: var(--rojo); }
+
+.zona__contador { margin-right: auto; align-self: center; font-size: 0.85rem; color: var(--gris-600); }
+
+/* ---- Responsivo ---- */
+@media (max-width: 1100px) {
+    .crud__resumen--cuatro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+    .roles__lista,
+    .zona__camaras { grid-template-columns: 1fr; }
+    .selector { width: 100%; }
+    .zona__contador { margin: 0 auto 4px; }
+}

@@ -7,6 +7,7 @@ import RutaProtegida from "./components/RutaProtegida";
 import MainLayout from "./layouts/MainLayout";
 import { RUTAS_MENU } from "./config/menu";
 import Empleados from "./pages/catalogos/Empleados";
+import Usuarios from "./pages/Usuarios";
 
 // ============================================================================
 // RUTAS
@@ -21,7 +22,8 @@ import Empleados from "./pages/catalogos/Empleados";
 // ============================================================================
 
 const MODULOS: Record<string, ReactElement> = {
-    "/catalogos/empleados": <Empleados />
+    "/catalogos/empleados": <Empleados />,
+    "/usuarios": <Usuarios />
 };
 
 const RUTAS = RUTAS_MENU.filter((r) => r.ruta !== "/");
