@@ -1,0 +1,172 @@
+/* ============================================================================
+   DESPACHOS Y TRANSPORTES · complementos de crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+/* ---- Vista de detalle del despacho ---- */
+.detalle__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: var(--verde-700);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.detalle__volver:hover { text-decoration: underline; }
+
+.detalle__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.detalle__columna { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+.panel__titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+}
+.panel__titulo h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+/* ---- Ficha de datos (pares etiqueta/valor) ---- */
+.ficha {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px 18px;
+    margin: 0;
+}
+.ficha div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ficha dt {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-600);
+}
+.ficha dd { margin: 0; font-size: 0.95rem; color: var(--gris-900); overflow-wrap: anywhere; }
+.ficha__ancha { grid-column: 1 / -1; }
+
+/* ---- Totales grandes ---- */
+.totales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.totales div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: var(--gris-100);
+    border-radius: 12px;
+}
+.totales strong { font-size: 1.6rem; line-height: 1.1; color: var(--verde-900); }
+.totales span { font-size: 0.78rem; color: var(--gris-600); }
+
+/* ---- Panel de inocuidad ---- */
+.inocuidad {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+}
+.inocuidad__cabeza { display: flex; align-items: center; gap: 10px; }
+.inocuidad__cabeza strong { font-size: 1.05rem; }
+.inocuidad p { margin: 0; font-size: 0.88rem; line-height: 1.4; }
+.inocuidad--pendiente { color: #8a4b0f; background: var(--ambar-100); border-color: #f3e0a8; }
+.inocuidad--aprobada { color: var(--verde-700); background: #f2faf5; border-color: #bfe3cd; }
+.inocuidad--rechazada { color: var(--rojo); background: var(--rojo-100); border-color: #f5c6c0; }
+.inocuidad .boton { width: 100%; min-height: 44px; }
+
+/* ---- Acciones del documento ---- */
+.acciones-doc { display: flex; flex-direction: column; gap: 10px; }
+.acciones-doc .boton { width: 100%; min-height: 44px; }
+.acciones-doc__motivo { margin: -4px 0 0; font-size: 0.8rem; color: var(--gris-600); text-align: center; }
+
+/* ---- Opciones de inspección ---- */
+.opciones-inspeccion { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opcion-inspeccion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 10px;
+    font: inherit;
+    font-weight: 700;
+    color: var(--gris-600);
+    background: #fff;
+    border: 2px solid var(--gris-300);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.opcion-inspeccion small { font-weight: 400; font-size: 0.78rem; }
+.opcion-inspeccion--aprobar.opcion-inspeccion--activa { color: var(--verde-700); background: #f2faf5; border-color: var(--verde-500); }
+.opcion-inspeccion--rechazar.opcion-inspeccion--activa { color: var(--rojo); background: var(--rojo-100); border-color: var(--rojo); }
+
+/* ---- Lista de fruta disponible (picking) ---- */
+.fruta-lista { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.fruta-opcion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 12px 14px;
+    font: inherit;
+    text-align: left;
+    color: var(--gris-900);
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.fruta-opcion:hover { border-color: var(--verde-500); }
+.fruta-opcion--activa { background: #f2faf5; border-color: var(--verde-500); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.12); }
+.fruta-opcion--otro { border-style: dashed; }
+.fruta-opcion__lote { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fruta-opcion__cantidad { text-align: right; font-weight: 700; color: var(--verde-900); }
+.fruta-opcion small { font-size: 0.78rem; color: var(--gris-600); }
+
+.interruptor { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; color: var(--gris-600); cursor: pointer; }
+.interruptor input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+
+/* ---- Auditoría ---- */
+.auditoria { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.auditoria li { padding: 10px 12px; font-size: 0.86rem; background: var(--gris-100); border-radius: 10px; }
+.auditoria li strong { display: block; margin-bottom: 2px; }
+.auditoria li small { color: var(--gris-600); }
+
+/* ---- Resumen del servicio en el formulario de transporte ---- */
+.servicio-previa {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    color: var(--verde-900);
+    background: #f2faf5;
+    border: 1px dashed var(--verde-500);
+    border-radius: 12px;
+}
+.servicio-previa div { display: flex; flex-direction: column; min-width: 0; }
+.servicio-previa small { color: var(--gris-600); }
+
+@media (max-width: 1100px) {
+    .detalle__grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+    .opciones-inspeccion { grid-template-columns: 1fr; }
+    .totales strong { font-size: 1.3rem; }
+}

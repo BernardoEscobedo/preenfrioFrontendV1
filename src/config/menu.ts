@@ -56,6 +56,10 @@ export const MENU: ItemMenu[] = [
             { etiqueta: "SKU", ruta: "/catalogos/sku", rolMinimo: ROLES.COORDINADOR },
             { etiqueta: "Clientes / CEDIS", ruta: "/catalogos/cedis", rolMinimo: ROLES.COORDINADOR },
             { etiqueta: "Transportes", ruta: "/catalogos/transportes", rolMinimo: ROLES.COORDINADOR },
+            { etiqueta: "Líneas fleteras", ruta: "/catalogos/lineas-fleteras", rolMinimo: ROLES.COORDINADOR },
+            { etiqueta: "Operadores", ruta: "/catalogos/operadores", rolMinimo: ROLES.COORDINADOR },
+            { etiqueta: "Tractocamiones", ruta: "/catalogos/tractocamiones", rolMinimo: ROLES.COORDINADOR },
+            { etiqueta: "Cajas refrigeradas", ruta: "/catalogos/cajas-refrigeradas", rolMinimo: ROLES.COORDINADOR },
             { etiqueta: "Cámaras", ruta: "/catalogos/camaras", rolMinimo: ROLES.COORDINADOR },
             { etiqueta: "Empleados", ruta: "/catalogos/empleados", rolMinimo: ROLES.COORDINADOR }
         ]

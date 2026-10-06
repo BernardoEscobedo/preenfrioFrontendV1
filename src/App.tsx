@@ -10,9 +10,15 @@ import Productores from "./pages/catalogos/Productores";
 import Fincas from "./pages/catalogos/Fincas";
 import SkuCatalogo from "./pages/catalogos/Sku";
 import CedisCatalogo from "./pages/catalogos/Cedis";
+import Transportes from "./pages/catalogos/Transportes";
+import LineasFleteras from "./pages/catalogos/LineasFleteras";
+import Operadores from "./pages/catalogos/Operadores";
+import Tractocamiones from "./pages/catalogos/Tractocamiones";
+import CajasRefrigeradas from "./pages/catalogos/CajasRefrigeradas";
 import Empleados from "./pages/catalogos/Empleados";
 import Camaras from "./pages/catalogos/Camaras";
 import Usuarios from "./pages/Usuarios";
+import Despachos from "./pages/Despachos";
 
 // ============================================================================
 // RUTAS
@@ -26,8 +32,14 @@ const MODULOS: Record<string, ReactElement> = {
     "/catalogos/fincas": <Fincas />,
     "/catalogos/sku": <SkuCatalogo />,
     "/catalogos/cedis": <CedisCatalogo />,
+    "/catalogos/transportes": <Transportes />,
+    "/catalogos/lineas-fleteras": <LineasFleteras />,
+    "/catalogos/operadores": <Operadores />,
+    "/catalogos/tractocamiones": <Tractocamiones />,
+    "/catalogos/cajas-refrigeradas": <CajasRefrigeradas />,
     "/catalogos/empleados": <Empleados />,
     "/catalogos/camaras": <Camaras />,
+    "/despachos": <Despachos />,
     "/usuarios": <Usuarios />
 };
 
