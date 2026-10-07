@@ -19,6 +19,7 @@ import Empleados from "./pages/catalogos/Empleados";
 import Camaras from "./pages/catalogos/Camaras";
 import Usuarios from "./pages/Usuarios";
 import Despachos from "./pages/Despachos";
+import Produccion from "./pages/Produccion";
 
 // ============================================================================
 // RUTAS
@@ -39,6 +40,7 @@ const MODULOS: Record<string, ReactElement> = {
     "/catalogos/cajas-refrigeradas": <CajasRefrigeradas />,
     "/catalogos/empleados": <Empleados />,
     "/catalogos/camaras": <Camaras />,
+    "/produccion": <Produccion />,
     "/despachos": <Despachos />,
     "/usuarios": <Usuarios />
 };

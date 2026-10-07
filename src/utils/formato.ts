@@ -1,5 +1,5 @@
 // ============================================================================
-// FORMATO · helpers compartidos por transportes y despachos
+// FORMATO · helpers compartidos
 // ============================================================================
 
 /** Para búsquedas: sin acentos y en minúsculas. */

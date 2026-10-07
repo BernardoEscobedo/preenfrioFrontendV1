@@ -1,0 +1,97 @@
+/* ============================================================================
+   PRODUCCIÓN · importación de Excel y asignación de preenfrío
+   Complementa crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+.produccion__semana {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--gris-600);
+}
+.produccion__semana input {
+    padding: 8px 10px;
+    font: inherit;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 10px;
+}
+.produccion__semana input[type="number"] { width: 72px; }
+.produccion__pestanas { align-self: flex-start; }
+.produccion__pestanas button { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---- Zona para soltar el archivo ---- */
+.importacion__zona {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--verde-700);
+    background: #f7fbf8;
+    border: 2px dashed var(--verde-500);
+    border-radius: 16px;
+}
+.importacion__zona small { max-width: 620px; color: var(--gris-600); }
+
+.importacion__archivo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-right: auto;
+}
+.importacion__archivo small { color: var(--gris-600); }
+
+.importacion__nota { margin: 0 0 12px; font-size: 0.88rem; color: var(--gris-600); }
+.importacion__destinos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+/* KPI rojo para "Con error" */
+.mini-kpi--rojo { color: var(--rojo); }
+
+/* ---- Tabla de vista previa ---- */
+.importacion--cargando { opacity: 0.55; pointer-events: none; }
+.importacion__tabla td { vertical-align: top; }
+.importacion__fila--error { background: #fff6f5; }
+.importacion__fila--aviso { background: #fffbef; }
+.importacion__fila--omitida { opacity: 0.6; }
+
+.importacion__lote {
+    max-width: 210px;
+    padding: 4px 6px;
+    font: inherit;
+    font-size: 0.8rem;
+    border: 1.5px solid #f3e0a8;
+    border-radius: 8px;
+    background: var(--ambar-100);
+}
+
+.importacion__mensajes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.importacion__mensaje {
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    line-height: 1.3;
+    border-radius: 6px;
+}
+.importacion__mensaje--error { color: var(--rojo); background: var(--rojo-100); }
+.importacion__mensaje--aviso { color: #8a4b0f; background: var(--ambar-100); }
+
+/* ---- Asignación ---- */
+.asignacion__camaras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+.asignacion__fila--elegida { background: #f2faf5; }
