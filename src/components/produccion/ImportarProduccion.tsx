@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, FileSpreadsheet, Pencil, RefreshCw, Upload, X, XCircle } from "lucide-react";
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Download,
+    FileSpreadsheet,
+    Pencil,
+    RefreshCw,
+    Upload,
+    X,
+    XCircle
+} from "lucide-react";
 import ModalConfirmar from "../ui/ModalConfirmar";
 import ModalCorregirFila from "./ModalCorregirFila";
 import { mensajeError } from "../../api/axios";
 import * as produccionService from "../../services/produccion.service";
-import { leerPlantillaProduccion } from "../../utils/excelProduccion";
+import { descargarPlantillaProduccion, leerPlantillaProduccion } from "../../utils/excelProduccion";
 import { fechaCorta } from "../../utils/formato";
 import type { TipoAviso } from "../../hooks/useAvisos";
 import type { CatalogosCorreccion, EstadoFila, FilaExcel, VistaPrevia } from "../../types/produccion";
@@ -12,6 +22,8 @@ import type { CatalogosCorreccion, EstadoFila, FilaExcel, VistaPrevia } from "..
 // ============================================================================
 // IMPORTAR PRODUCCIÓN DESDE EXCEL · coordinador+
 // ============================================================================
+// 0. "Descargar plantilla": Excel con la hoja Produccion vacía, una hoja de
+//    Ejemplo y otra de Instrucciones (esas dos no se importan).
 // 1. Se elige el archivo; se lee en el navegador (no se sube el archivo).
 // 2. El backend evalúa cada fila: ✅ lista · ⚠️ aviso · ❌ error · ya importada.
 // 3. Se eligen los destinos sin equivalencia, se corrigen errores en el
@@ -60,6 +72,15 @@ export default function ImportarProduccion({ mostrar, onImportado }: Props) {
     useEffect(() => {
         produccionService.getCatalogos().then(setCatalogos).catch((e) => setError(mensajeError(e)));
     }, []);
+
+    // ---- Plantilla ----
+    const descargarPlantilla = () => {
+        try {
+            descargarPlantillaProduccion();
+        } catch {
+            mostrar("error", "No se pudo generar la plantilla");
+        }
+    };
 
     // ---- Evaluación en el backend ----
     const evaluar = useCallback(async (f: FilaExcel[], d: Record<string, number>) => {
@@ -161,23 +182,34 @@ export default function ImportarProduccion({ mostrar, onImportado }: Props) {
                     <FileSpreadsheet size={44} />
                     <strong>Arrastra aquí la plantilla de producción</strong>
                     <span>o</span>
-                    <button
-                        type="button"
-                        className="boton boton--primario boton--auto"
-                        onClick={() => entradaArchivo.current?.click()}
-                        disabled={leyendo}
-                    >
-                        {leyendo ? (
-                            <span className="spinner spinner--chico" />
-                        ) : (
-                            <>
-                                <Upload size={18} /> Elegir Excel
-                            </>
-                        )}
-                    </button>
+                    <div className="importacion__botones">
+                        <button
+                            type="button"
+                            className="boton boton--primario boton--auto"
+                            onClick={() => entradaArchivo.current?.click()}
+                            disabled={leyendo}
+                        >
+                            {leyendo ? (
+                                <span className="spinner spinner--chico" />
+                            ) : (
+                                <>
+                                    <Upload size={18} /> Elegir Excel
+                                </>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            className="boton boton--claro boton--auto"
+                            onClick={descargarPlantilla}
+                            disabled={leyendo}
+                        >
+                            <Download size={18} /> Descargar plantilla
+                        </button>
+                    </div>
                     <small>
-                        Columnas: Semana, Region, Finca, Productor, fecha_empaque, transito, fecha_entrega, CEDIS,
-                        Cliente, SKU, Cajas Procesadas, Estiba_Pallets, comentarios, Lote.
+                        ¿Primera vez? Descarga la plantilla: trae la hoja <strong>Produccion</strong> para capturar, una
+                        hoja de <strong>Ejemplo</strong> y las <strong>Instrucciones</strong> de cada columna. Solo se
+                        importa la hoja Produccion.
                     </small>
                     <input
                         ref={entradaArchivo}
@@ -269,6 +301,15 @@ export default function ImportarProduccion({ mostrar, onImportado }: Props) {
                         </div>
                     )}
 
+                    <button
+                        type="button"
+                        className="boton-icono boton-icono--borde"
+                        onClick={descargarPlantilla}
+                        title="Descargar plantilla en blanco"
+                        aria-label="Descargar plantilla en blanco"
+                    >
+                        <Download size={18} />
+                    </button>
                     <button
                         type="button"
                         className="boton-icono boton-icono--borde"

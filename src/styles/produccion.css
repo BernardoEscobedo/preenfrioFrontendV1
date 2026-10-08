@@ -33,7 +33,14 @@
     border: 2px dashed var(--verde-500);
     border-radius: 16px;
 }
-.importacion__zona small { max-width: 620px; color: var(--gris-600); }
+.importacion__zona small { max-width: 620px; color: var(--gris-600); line-height: 1.45; }
+
+.importacion__botones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
 
 .importacion__archivo {
     display: flex;
