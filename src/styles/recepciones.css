@@ -1,0 +1,64 @@
+/* ============================================================================
+   RECEPCIONES · andén del preenfrío y alertas
+   Complementa crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+.recepciones__pestanas { align-self: flex-start; }
+.recepciones__pestanas button { display: inline-flex; align-items: center; gap: 6px; }
+
+.interruptor { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; color: var(--gris-600); cursor: pointer; }
+.interruptor input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+
+/* Botón compacto para la columna de acción */
+.boton--chico { min-height: 34px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
+
+/* ---- Modal de recepción ---- */
+.recibir__resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--gris-100);
+    border-radius: 12px;
+}
+.recibir__resumen div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.recibir__resumen small {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-600);
+}
+.recibir__resumen strong { font-size: 0.92rem; overflow-wrap: anywhere; }
+.recibir__cierre { align-self: flex-start; margin: 12px 0 4px; }
+.recibir__previa {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0 0;
+    padding: 8px 12px;
+    font-size: 0.86rem;
+    color: var(--verde-700);
+    background: #f2faf5;
+    border-radius: 10px;
+}
+.recibir__previa--alerta { color: #8a4b0f; background: var(--ambar-100); }
+
+/* ---- Alertas ---- */
+.alertas__lista { display: flex; flex-direction: column; gap: 12px; }
+.alerta-rec { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1.5px solid var(--gris-300); border-radius: 14px; }
+.alerta-rec--pendiente { border-color: #f3e0a8; background: #fffdf5; }
+.alerta-rec--atendida { opacity: 0.85; }
+.alerta-rec__cabeza { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.alerta-rec__cabeza small { margin-left: auto; color: var(--gris-600); }
+.alerta-rec__cuerpo { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.alerta-rec__cuerpo > div { display: flex; flex-direction: column; gap: 2px; }
+.alerta-rec__cuerpo small { color: var(--gris-600); }
+.alerta-rec__cifras { border-collapse: collapse; font-size: 0.88rem; }
+.alerta-rec__cifras th, .alerta-rec__cifras td { padding: 4px 10px; text-align: right; }
+.alerta-rec__cifras thead th { font-size: 0.72rem; text-transform: uppercase; color: var(--gris-600); }
+.alerta-rec__cifras tbody th { text-align: left; font-weight: 600; }
+.alerta-rec__dif { font-weight: 700; color: var(--rojo); }
+.alerta-rec__pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.alerta-rec__pie small { color: var(--gris-600); }
+.alerta-rec__atencion { display: inline-flex; align-items: center; gap: 4px; color: var(--verde-700) !important; }
