@@ -1,0 +1,97 @@
+/* ============================================================================
+   COLA DE CÁMARA · selector de preenfrío, cola e ingreso
+   Complementa crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+.cola__camaras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+.cola__camara {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    font: inherit;
+    text-align: left;
+    color: var(--gris-900);
+    background: #fff;
+    border: 2px solid var(--gris-300);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cola__camara:hover { border-color: var(--verde-500); }
+.cola__camara--activa { border-color: var(--verde-700); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15); }
+.cola__camara-cabeza { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--verde-700); }
+.cola__camara-cabeza strong { color: var(--gris-900); }
+.cola__camara-datos { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; color: var(--gris-600); }
+.cola__camara-datos strong { color: var(--gris-900); }
+.cola__critico { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--rojo); }
+
+.cola__barra { height: 8px; background: var(--gris-100); border-radius: 99px; overflow: hidden; }
+.cola__barra span { display: block; height: 100%; background: var(--verde-500); border-radius: 99px; }
+.cola__barra span.llena { background: var(--rojo); }
+
+.cola__pestanas { align-self: flex-start; }
+.cola__pestanas button { display: inline-flex; align-items: center; gap: 6px; }
+
+.cola__orden { color: var(--gris-600); }
+.cola__vacio { margin: 0; padding: 18px; text-align: center; color: var(--gris-600); }
+
+.cola__posicion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    font-weight: 700;
+    color: var(--verde-900);
+    background: var(--gris-100);
+    border-radius: 50%;
+}
+.cola__fila--priorizada { background: #f5f9ff; }
+.cola__fila--entra { background: #f2faf5; }
+.cola__manual { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #1d5fa8 !important; }
+
+/* ---- Espacio disponible (ingreso) ---- */
+.cola__espacio {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    color: var(--verde-700);
+    background: #f2faf5;
+    border: 1.5px solid #bfe3cd;
+    border-radius: 12px;
+}
+.cola__espacio div { display: flex; flex-direction: column; }
+.cola__espacio small { color: var(--gris-600); }
+.cola__espacio--lleno { color: var(--rojo); background: var(--rojo-100); border-color: #f5c6c0; }
+
+/* ---- Modal de ingreso ---- */
+.cola__resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: var(--gris-100);
+    border-radius: 12px;
+}
+.cola__resumen div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cola__resumen small {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-600);
+}
+.cola__confirma { display: flex; margin-top: 8px; }
+
+.interruptor { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.interruptor input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+
+.boton--chico { min-height: 34px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
