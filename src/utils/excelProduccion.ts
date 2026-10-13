@@ -201,7 +201,7 @@ const INSTRUCCIONES: string[][] = [
     ["Cliente", "Sí", "Como lo manejan en planeación", "WM"],
     ["SKU", "Sí", "Código del catálogo de SKU", "CPR01102"],
     ["Cajas Procesadas", "Sí", "Número entero de cajas", "240"],
-    ["Estiba_Pallets", "No", "Tarimas. \"Granel\" o vacío = 0. Con decimales se redondea hacia arriba", "5"],
+        ["Estiba_Pallets", "No", "Tarimas. \"Granel\" o vacío = 0. Con decimales: media tarima o más cuenta como tarima; menos, no", "5"],
     ["comentarios", "No", "Texto libre, máximo 250 caracteres", "23 convencional"],
     ["Lote", "No", "Si lo traen se compara con el que sugiere el sistema; tú eliges cuál se guarda", "A01004-410610-1"],
     [""],

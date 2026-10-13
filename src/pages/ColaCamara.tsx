@@ -167,7 +167,7 @@ export default function ColaCamara() {
     // ---- Vista ----
     return (
         <div className="crud">
-            <EncabezadoPagina titulo="Cola de cámara" subtitulo="Lo que está dentro y lo que espera entrar">
+            <EncabezadoPagina titulo="Procesos en camara" subtitulo="Lo que está dentro y lo que espera entrar">
                 <button
                     type="button"
                     className="boton-icono boton-icono--borde"
