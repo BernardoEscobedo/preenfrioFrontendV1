@@ -38,9 +38,11 @@ export interface ItemMenu extends SubItemMenu {
 
 export const MENU: ItemMenu[] = [
     { etiqueta: "Inicio", ruta: "/", icono: Home, rolMinimo: ROLES.OPERATIVO },
-    { etiqueta: "Recepciones", ruta: "/recepciones", icono: Truck, rolMinimo: ROLES.OPERATIVO },
-    { etiqueta: "Cola de cámara", ruta: "/cola", icono: ListOrdered, rolMinimo: ROLES.OPERATIVO },
     { etiqueta: "Producción", ruta: "/produccion", icono: Factory, rolMinimo: ROLES.OPERATIVO },
+    
+    { etiqueta: "Recepciones", ruta: "/recepciones", icono: Truck, rolMinimo: ROLES.OPERATIVO },
+    { etiqueta: "Procesos en cámara", ruta: "/cola", icono: ListOrdered, rolMinimo: ROLES.OPERATIVO },
+    
     { etiqueta: "Movimientos", ruta: "/movimientos", icono: ArrowLeftRight, rolMinimo: ROLES.OPERATIVO },
     { etiqueta: "Despachos", ruta: "/despachos", icono: PackageCheck, rolMinimo: ROLES.OPERATIVO },
     { etiqueta: "Bloques y pulpeos", ruta: "/pulpeos", icono: Thermometer, rolMinimo: ROLES.OPERATIVO },
