@@ -1,12 +1,12 @@
 // ============================================================================
 // TIPOS · MOVIMIENTOS DE INVENTARIO
 // ============================================================================
-// Espejo de vw_movimientos, vw_inventario_disponible (+horas_en_preenfrio)
-// y vw_disponibilidad_camaras. Los SUM/COUNT llegan como texto: siempre
-// pasar por Number().
+// Espejo de vw_movimientos, vw_inventario_disponible (+horas_en_preenfrio,
+// +cajas_en_bloques) y vw_disponibilidad_camaras. Los SUM/COUNT llegan como
+// texto: siempre pasar por Number().
 //
 //   tipo 1 = ingreso a preenfrío     (lo genera la recepción)
-//   tipo 2 = preenfrío → conserva    (lo crea ESTE módulo)
+//   tipo 2 = preenfrío → conserva    (lo crea ESTE módulo: por bloque o suelto)
 //   tipo 3 = salida por despacho     (lo genera el despacho)
 // ============================================================================
 
@@ -55,6 +55,8 @@ export interface Trasladable {
     nivel_criticidad: NivelCriticidad;
     criticidad_texto: string;
     horas_en_preenfrio: Num | null;
+    /** Cajas del lote armadas en bloques en esta cámara: se mueven con el bloque */
+    cajas_en_bloques: Num;
 }
 
 /** Fila de la bitácora (vw_movimientos) */
@@ -97,10 +99,26 @@ export interface NuevoTraslado {
     observaciones: string | null;
 }
 
+export interface TrasladoBloque {
+    id_bloque: number;
+    id_tarimas: number[];
+    id_camara_destino: number;
+    fecha_movimiento: string | null;
+    hora_movimiento: string | null;
+    temperatura: number | null;
+    observaciones: string | null;
+}
+
 export interface RespuestaTraslado {
     mensaje: string;
     resultado: string;
     origen: { tarimas_restantes: Num; cerrada: boolean };
+    avisos: string[];
+}
+
+export interface RespuestaTrasladoBloque {
+    mensaje: string;
+    movimientos: number;
     avisos: string[];
 }
 

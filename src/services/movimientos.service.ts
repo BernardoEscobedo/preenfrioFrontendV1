@@ -5,16 +5,20 @@ import type {
     NuevoTraslado,
     RespuestaReversa,
     RespuestaTraslado,
-    Trasladable
+    RespuestaTrasladoBloque,
+    Trasladable,
+    TrasladoBloque
 } from "../types/movimiento";
 
 // ============================================================================
-// MOVIMIENTOS · endpoints (ya existen en el backend)
+// MOVIMIENTOS · endpoints
 // ============================================================================
 //   GET  /ocupaciones/tablero?tipo_camara=1|2     stock por cámara
-//   GET  /movimientos/trasladables?id_camara=     fruta dentro de preenfríos
-//   GET  /movimientos?fecha_desde&fecha_hasta&tipo_movimiento&buscar
-//   POST /movimientos                             traslado (supervisor+)
+//   GET  /tarimas?id_camara=                      bloques del preenfrío
+//   POST /movimientos/bloque                      trasladar bloque (supervisor+)
+//   GET  /movimientos/trasladables?id_camara=     fruta dentro (suelta y en bloque)
+//   POST /movimientos                             traslado suelto (supervisor+)
+//   GET  /movimientos?fecha_desde&fecha_hasta&tipo_movimiento
 //   POST /movimientos/:id/revertir { motivo }     reversa (supervisor+)
 // ============================================================================
 
@@ -25,6 +29,11 @@ export const getStock = async (): Promise<CamaraStock[]> => {
         api.get<{ camaras: CamaraStock[] }>("/ocupaciones/tablero", { params: { tipo_camara: 2 } })
     ]);
     return [...(pre.data?.camaras ?? []), ...(con.data?.camaras ?? [])];
+};
+
+export const trasladarBloque = async (datos: TrasladoBloque) => {
+    const { data } = await api.post<RespuestaTrasladoBloque>("/movimientos/bloque", datos);
+    return data;
 };
 
 export const getTrasladables = async (id_camara?: number | null) => {

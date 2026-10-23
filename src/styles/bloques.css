@@ -1,0 +1,96 @@
+/* ============================================================================
+   BLOQUES Y PULPEOS · rejilla de tarimas y semáforo
+   Complementa crud.css y despachoAsistente.css
+   ============================================================================ */
+
+.bloques__camaras { align-self: flex-start; flex-wrap: wrap; }
+.bloques__camaras button { display: inline-flex; align-items: center; gap: 6px; }
+
+.bloques__leyenda { display: flex; gap: 8px; flex-wrap: wrap; }
+.leyenda { padding: 3px 10px; font-size: 0.78rem; font-weight: 600; border-radius: 99px; border: 1.5px solid; }
+.leyenda--al_dia { color: var(--verde-700); background: #e6f4ec; border-color: #bfe3cd; }
+.leyenda--toca { color: #8a4b0f; background: var(--ambar-100); border-color: #f3e0a8; }
+.leyenda--vencido { color: var(--rojo); background: var(--rojo-100); border-color: #f5c6c0; }
+.leyenda--primero { color: #1d5fa8; background: #eaf2fb; border-color: #c4dbf3; }
+
+.bloques { display: flex; flex-direction: column; gap: 16px; }
+.bloque .panel__titulo { gap: 10px; }
+.bloque .panel__titulo small { color: var(--gris-600); }
+.bloque__acciones { display: flex; gap: 8px; margin-left: auto; }
+
+/* ---- Rejilla ---- */
+.bloque__rejilla { display: grid; gap: 8px; }
+.bloque__rejilla--12 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.bloque__rejilla--10 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.posicion {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 96px;
+    padding: 8px 10px;
+    font: inherit;
+    text-align: left;
+    color: var(--gris-900);
+    background: #fff;
+    border: 2px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+}
+.posicion strong { font-size: 0.8rem; color: var(--gris-600); }
+.posicion small { font-size: 0.72rem; color: var(--gris-600); line-height: 1.2; }
+.posicion__temp { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+.posicion__sku { overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+.posicion__horas { display: inline-flex; align-items: center; gap: 2px; margin-top: auto; font-weight: 600; }
+
+.posicion--vacia { cursor: default; border-style: dashed; background: var(--gris-100); }
+.posicion--al_dia { background: #f2faf5; border-color: var(--verde-500); }
+.posicion--toca { background: var(--ambar-100); border-color: #e8b84a; }
+.posicion--vencido { background: var(--rojo-100); border-color: var(--rojo); }
+.posicion--primero { background: #f2f7fd; border-color: #8db8e8; }
+.posicion--libre { background: #f4f7fb; border-color: #c4d3e6; }
+.posicion--5h { box-shadow: 0 0 0 3px rgba(200, 40, 40, 0.25); }
+.posicion--5h .posicion__horas { color: var(--rojo); }
+
+/* Armar */
+.posicion--ocupada { cursor: not-allowed; opacity: 0.55; background: var(--gris-100); }
+.posicion--capturada { background: #f2faf5; border-color: var(--verde-500); }
+.posicion--abierta { box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.25); }
+.armar__tarima { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 12px 14px; border: 1.5px solid var(--gris-300); border-radius: 12px; }
+.armar__linea { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 8px; align-items: center; }
+.armar__linea select,
+.armar__linea input { padding: 8px 10px; font: inherit; border: 1.5px solid var(--gris-300); border-radius: 10px; min-width: 0; }
+.armar__detalle { grid-column: 1 / -1; color: var(--gris-600); }
+
+/* Tarima */
+.tarima__resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px 14px; background: var(--gris-100); border-radius: 12px; }
+.tarima__resumen div { display: flex; flex-direction: column; gap: 2px; }
+.tarima__resumen small { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--gris-600); }
+.tarima__alerta { color: var(--rojo); }
+.tarima__lotes { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; padding: 0; list-style: none; }
+.tarima__lotes li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.tarima__lotes small { width: 100%; color: var(--gris-600); }
+.tarima__foto { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tarima__foto img { max-height: 120px; border-radius: 10px; border: 1px solid var(--gris-300); }
+.tarima__historial { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tarima__historial li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 12px; background: var(--gris-100); border-radius: 10px; }
+.tarima__historial small { width: 100%; color: var(--gris-600); }
+
+.mover__lista { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.mover__lista li { display: flex; justify-content: space-between; gap: 10px; }
+.mover__lista small { color: var(--gris-600); }
+
+.boton--chico { min-height: 34px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
+
+@media (max-width: 900px) {
+    .bloque__rejilla--12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .bloque__rejilla--10 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+    .bloque__rejilla--12,
+    .bloque__rejilla--10 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .armar__linea { grid-template-columns: 1fr 80px auto; }
+    .tarima__resumen { grid-template-columns: 1fr; }
+}

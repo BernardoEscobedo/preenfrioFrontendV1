@@ -6,6 +6,7 @@ import {
     Boxes,
     Clock,
     History,
+    Layers,
     RefreshCw,
     Search,
     Snowflake,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import EncabezadoPagina from "../components/layout/EncabezadoPagina";
 import ModalTrasladar from "../components/movimientos/ModalTrasladar";
+import ModalTrasladarBloque from "../components/movimientos/ModalTrasladarBloque";
 import ModalMotivo from "../components/ui/ModalMotivo";
 import Avisos from "../components/ui/Avisos";
 import { useAvisos } from "../hooks/useAvisos";
@@ -23,29 +25,34 @@ import { useAuth } from "../context/AuthContext";
 import { ROLES, tieneRol } from "../config/permissions";
 import { mensajeError } from "../api/axios";
 import * as movimientosService from "../services/movimientos.service";
+import * as tarimasService from "../services/tarimas.service";
 import { fechaCorta, hoyISO, normalizar } from "../utils/formato";
-import type { CamaraStock, Movimiento, RespuestaTraslado, Trasladable } from "../types/movimiento";
+import type { CamaraStock, Movimiento, RespuestaTraslado, RespuestaTrasladoBloque, Trasladable } from "../types/movimiento";
+import type { BloqueTarimas } from "../types/tarima";
 import "../styles/crud.css";
 import "../styles/usuarios.css";
 import "../styles/fincas.css";
 import "../styles/movimientos.css";
+import "../styles/bloques.css";
 
 // ============================================================================
 // MOVIMIENTOS · preenfrío → conservación y stock
 // ============================================================================
-//   Stock arriba          tarjetas por cámara (preenfrío y conserva) con lo
-//                         que hay ahorita. Se refresca cada minuto.
-//   Mover a conservación  fruta DENTRO de los preenfríos, ordenada por
-//                         criticidad, con su botón Mover (supervisor+).
-//   Registro              bitácora de movimientos con filtros. Revertir un
-//                         traslado crea un movimiento inverso: quedan las
-//                         dos filas en la bitácora (supervisor+).
+//   Stock arriba       tarjetas por cámara (preenfrío y conserva). Se
+//                      refresca cada minuto.
+//   Mover bloques      los bloques de los preenfríos. "Mover" lo pasa a
+//                      conservación completo o parcial: mueve el inventario
+//                      y la ubicación de sus tarimas (supervisor+).
+//   Fruta sin bloque   lotes dentro del preenfrío que no están armados en
+//                      ningún bloque; se mueven sueltos (supervisor+).
+//   Registro           bitácora con filtros. Revertir crea el movimiento
+//                      inverso (los de traslado de bloque no se revierten
+//                      sueltos).
 //
-// El inventario lo mueve la BD (trg_sync_ocupacion_movimiento). Esta
-// pantalla solo registra el traslado y relee.
+// El inventario lo mueve la BD (trg_sync_ocupacion_movimiento).
 // ============================================================================
 
-type Pestana = "mover" | "registro";
+type Pestana = "bloques" | "sueltos" | "registro";
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0);
 const REFRESCO_MS = 60_000;
@@ -65,16 +72,26 @@ const sumarDias = (iso: string, dias: number) => {
     return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}-${String(f.getDate()).padStart(2, "0")}`;
 };
 
+interface BloqueEnPreenfrio {
+    bloque: BloqueTarimas;
+    camara: CamaraStock;
+}
+
 export default function Movimientos() {
     const { usuario } = useAuth();
     const { avisos, mostrar, quitar } = useAvisos();
     const puedeMover = tieneRol(usuario, ROLES.SUPERVISOR);
 
-    const [pestana, setPestana] = useState<Pestana>("mover");
+    const [pestana, setPestana] = useState<Pestana>("bloques");
     const [stock, setStock] = useState<CamaraStock[]>([]);
     const [error, setError] = useState("");
 
-    // ---- Mover ----
+    // ---- Bloques ----
+    const [bloques, setBloques] = useState<BloqueEnPreenfrio[]>([]);
+    const [cargandoBloques, setCargandoBloques] = useState(true);
+    const [moviendoBloque, setMoviendoBloque] = useState<BloqueEnPreenfrio | null>(null);
+
+    // ---- Fruta sin bloque ----
     const [trasladables, setTrasladables] = useState<Trasladable[]>([]);
     const [preenfrio, setPreenfrio] = useState("");
     const [buscarMover, setBuscarMover] = useState("");
@@ -93,9 +110,25 @@ export default function Movimientos() {
     // ---- Carga ----
     const cargarStock = useCallback(async () => {
         try {
-            setStock(await movimientosService.getStock());
+            const s = await movimientosService.getStock();
+            setStock(s);
+            return s;
         } catch (e) {
             setError(mensajeError(e));
+            return [];
+        }
+    }, []);
+
+    const cargarBloques = useCallback(async (camaras: CamaraStock[]) => {
+        setCargandoBloques(true);
+        try {
+            const pre = camaras.filter((c) => Number(c.tipo_camara) === 1);
+            const respuestas = await Promise.all(pre.map((c) => tarimasService.getBloques(c.id_camara)));
+            setBloques(respuestas.flatMap((r, i) => r.bloques.map((b) => ({ bloque: b, camara: pre[i] }))));
+        } catch (e) {
+            setError(mensajeError(e));
+        } finally {
+            setCargandoBloques(false);
         }
     }, []);
 
@@ -127,31 +160,32 @@ export default function Movimientos() {
         }
     }, [desde, hasta, tipo]);
 
+    const recargar = useCallback(async () => {
+        setError("");
+        const s = await cargarStock();
+        await Promise.all([cargarBloques(s), cargarTrasladables()]);
+    }, [cargarStock, cargarBloques, cargarTrasladables]);
+
     useEffect(() => {
-        cargarStock();
-        cargarTrasladables();
+        recargar();
         const t = setInterval(cargarStock, REFRESCO_MS);
         return () => clearInterval(t);
-    }, [cargarStock, cargarTrasladables]);
+    }, [recargar, cargarStock]);
 
     useEffect(() => {
         if (pestana === "registro") cargarRegistro();
     }, [pestana, cargarRegistro]);
 
-    const refrescarTodo = () => {
-        setError("");
-        cargarStock();
-        cargarTrasladables();
-        if (pestana === "registro") cargarRegistro();
-    };
-
     // ---- Derivados ----
     const preenfrios = stock.filter((c) => Number(c.tipo_camara) === 1);
     const conservaciones = stock.filter((c) => Number(c.tipo_camara) === 2);
 
+    const sueltos = trasladables.filter((p) => num(p.cajas_en_bloques) === 0);
+    const enBloque = trasladables.length - sueltos.length;
+
     const visiblesMover = useMemo(() => {
         const t = normalizar(buscarMover.trim());
-        return trasladables.filter((p) => {
+        return sueltos.filter((p) => {
             if (preenfrio && String(p.id_camara) !== preenfrio) return false;
             if (
                 t &&
@@ -162,19 +196,18 @@ export default function Movimientos() {
                 return false;
             return true;
         });
-    }, [trasladables, preenfrio, buscarMover]);
+    }, [sueltos, preenfrio, buscarMover]);
 
     const visiblesReg = useMemo(() => {
         const t = normalizar(buscarReg.trim());
         if (!t) return movs;
         return movs.filter((m) =>
             normalizar(
-                `${m.codigo_lote ?? ""} ${m.nombre_finca ?? ""} ${m.codigo_sku ?? ""} ${m.camara_origen ?? ""} ${m.camara_destino ?? ""} ${m.folio_despacho ?? ""}`
+                `${m.codigo_lote ?? ""} ${m.nombre_finca ?? ""} ${m.codigo_sku ?? ""} ${m.camara_origen ?? ""} ${m.camara_destino ?? ""} ${m.folio_despacho ?? ""} ${m.observaciones ?? ""}`
             ).includes(t)
         );
     }, [movs, buscarReg]);
 
-    // Movimientos que son reversa de otro, y los que ya fueron revertidos
     const revertidos = useMemo(() => {
         const ids = new Set<number>();
         for (const m of movs) {
@@ -191,8 +224,14 @@ export default function Movimientos() {
         setMoviendo(null);
         mostrar("exito", r.resultado || r.mensaje);
         r.avisos?.forEach((a) => mostrar("info", a));
-        cargarStock();
-        cargarTrasladables();
+        recargar();
+    };
+
+    const alTrasladarBloque = (r: RespuestaTrasladoBloque) => {
+        setMoviendoBloque(null);
+        mostrar("exito", r.mensaje);
+        r.avisos?.forEach((a) => mostrar("info", a));
+        recargar();
     };
 
     const confirmarReversa = async (motivo: string) => {
@@ -201,10 +240,11 @@ export default function Movimientos() {
         setRevirtiendo(null);
         mostrar("exito", r.mensaje);
         r.avisos?.forEach((a) => mostrar("info", a));
-        cargarStock();
-        cargarTrasladables();
+        recargar();
         cargarRegistro();
     };
+
+    const cargando = cargandoBloques || cargandoMover || cargandoReg;
 
     // ---- Vista ----
     return (
@@ -213,11 +253,14 @@ export default function Movimientos() {
                 <button
                     type="button"
                     className="boton-icono boton-icono--borde"
-                    onClick={refrescarTodo}
+                    onClick={() => {
+                        recargar();
+                        if (pestana === "registro") cargarRegistro();
+                    }}
                     title="Actualizar"
                     aria-label="Actualizar"
                 >
-                    <RefreshCw size={18} className={cargandoMover || cargandoReg ? "girando" : ""} />
+                    <RefreshCw size={18} className={cargando ? "girando" : ""} />
                 </button>
             </EncabezadoPagina>
 
@@ -258,28 +301,116 @@ export default function Movimientos() {
             </section>
 
             <div className="segmentado mov__pestanas" role="tablist">
-                <button
-                    type="button"
-                    role="tab"
-                    aria-selected={pestana === "mover"}
-                    className={pestana === "mover" ? "activo" : ""}
-                    onClick={() => setPestana("mover")}
-                >
-                    <ArrowRightLeft size={16} /> Mover a conservación {trasladables.length > 0 && <span>{trasladables.length}</span>}
+                <button type="button" role="tab" aria-selected={pestana === "bloques"} className={pestana === "bloques" ? "activo" : ""} onClick={() => setPestana("bloques")}>
+                    <Layers size={16} /> Mover bloques {bloques.length > 0 && <span>{bloques.length}</span>}
                 </button>
-                <button
-                    type="button"
-                    role="tab"
-                    aria-selected={pestana === "registro"}
-                    className={pestana === "registro" ? "activo" : ""}
-                    onClick={() => setPestana("registro")}
-                >
+                <button type="button" role="tab" aria-selected={pestana === "sueltos"} className={pestana === "sueltos" ? "activo" : ""} onClick={() => setPestana("sueltos")}>
+                    <ArrowRightLeft size={16} /> Fruta sin bloque {sueltos.length > 0 && <span>{sueltos.length}</span>}
+                </button>
+                <button type="button" role="tab" aria-selected={pestana === "registro"} className={pestana === "registro" ? "activo" : ""} onClick={() => setPestana("registro")}>
                     <History size={16} /> Registro
                 </button>
             </div>
 
-            {/* ================= MOVER ================= */}
-            {pestana === "mover" && (
+            {/* ================= MOVER BLOQUES ================= */}
+            {pestana === "bloques" && (
+                <section className="panel">
+                    {cargandoBloques && bloques.length === 0 ? (
+                        <div className="crud__vacio">
+                            <div className="spinner" />
+                            <p>Cargando bloques del preenfrío…</p>
+                        </div>
+                    ) : bloques.length === 0 ? (
+                        <div className="crud__vacio">
+                            <Layers size={40} />
+                            <p>No hay bloques en los preenfríos. Se arman en Bloques y pulpeos.</p>
+                        </div>
+                    ) : (
+                        <div className="tabla-contenedor">
+                            <table className="tabla tabla--crud">
+                                <thead>
+                                    <tr>
+                                        <th>Bloque</th>
+                                        <th>Preenfrío</th>
+                                        <th>Tarimas</th>
+                                        <th>Temperatura</th>
+                                        <th>Tiempo dentro</th>
+                                        <th>Lotes</th>
+                                        {puedeMover && <th className="acciones">Acción</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bloques.map(({ bloque: b, camara: c }) => {
+                                        const temps = b.tarimas.filter((t) => t.ultima_temperatura !== null).map((t) => num(t.ultima_temperatura));
+                                        const sinPulpeo = b.tarimas.length - temps.length;
+                                        const horas = Math.max(...b.tarimas.map((t) => num(t.horas_en_camara)));
+                                        const alertas = b.tarimas.filter((t) => t.alerta_5h).length;
+                                        const cajas = b.tarimas.reduce((s, t) => s + t.lotes.reduce((x, l) => x + Number(l.cantidad_cajas), 0), 0);
+                                        const lotes = [...new Set(b.tarimas.flatMap((t) => t.lotes.map((l) => `${l.codigo_lote} ${l.codigo_sku}`)))];
+                                        return (
+                                            <tr key={`${c.id_camara}-${b.id_bloque}`}>
+                                                <td data-etiqueta="Bloque">
+                                                    <span className="lote-chip mono">{b.codigo_bloque}</span>
+                                                </td>
+                                                <td data-etiqueta="Preenfrío">{c.nombre_camara}</td>
+                                                <td data-etiqueta="Tarimas">
+                                                    <div className="celda-doble">
+                                                        <span>
+                                                            {b.tarimas.length} de {b.posiciones}
+                                                        </span>
+                                                        <small>
+                                                            {cajas} cj
+                                                            {b.posiciones_fuera.length ? ` · ${b.posiciones_fuera.length} ya en conserva` : ""}
+                                                        </small>
+                                                    </div>
+                                                </td>
+                                                <td data-etiqueta="Temperatura">
+                                                    <div className="celda-doble">
+                                                        <span>
+                                                            <Thermometer size={12} className="icono-en-linea" />{" "}
+                                                            {temps.length ? `${Math.min(...temps)}–${Math.max(...temps)} °C` : "Sin pulpeo"}
+                                                        </span>
+                                                        {sinPulpeo > 0 && temps.length > 0 && <small>{sinPulpeo} sin pulpeo</small>}
+                                                    </div>
+                                                </td>
+                                                <td data-etiqueta="Tiempo">
+                                                    <div className="estados">
+                                                        <span>{horas} h</span>
+                                                        {alertas > 0 && (
+                                                            <span className="chip chip--rojo">
+                                                                <AlertTriangle size={12} /> {alertas} con más de 5 h
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td data-etiqueta="Lotes">
+                                                    <small>{lotes.join(" · ")}</small>
+                                                </td>
+                                                {puedeMover && (
+                                                    <td className="acciones">
+                                                        <button
+                                                            type="button"
+                                                            className="boton boton--primario boton--auto boton--chico"
+                                                            onClick={() => setMoviendoBloque({ bloque: b, camara: c })}
+                                                            disabled={conservaciones.length === 0}
+                                                            aria-label={`Mover bloque ${b.codigo_bloque}`}
+                                                        >
+                                                            <ArrowRight size={16} /> Mover
+                                                        </button>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
+            )}
+
+            {/* ================= FRUTA SIN BLOQUE ================= */}
+            {pestana === "sueltos" && (
                 <section className="panel">
                     <div className="crud__barra">
                         <label className="buscador">
@@ -292,12 +423,7 @@ export default function Movimientos() {
                             />
                         </label>
                         {preenfrios.length > 1 && (
-                            <select
-                                className="selector"
-                                value={preenfrio}
-                                onChange={(e) => setPreenfrio(e.target.value)}
-                                aria-label="Filtrar por preenfrío"
-                            >
+                            <select className="selector" value={preenfrio} onChange={(e) => setPreenfrio(e.target.value)} aria-label="Filtrar por preenfrío">
                                 <option value="">Todos los preenfríos</option>
                                 {preenfrios.map((c) => (
                                     <option key={c.id_camara} value={c.id_camara}>
@@ -308,13 +434,15 @@ export default function Movimientos() {
                         )}
                     </div>
 
+                    {enBloque > 0 && (
+                        <p className="pieza__vacio">
+                            {enBloque} montón(es) de fruta están armados en bloques: se mueven en <strong>Mover bloques</strong>.
+                        </p>
+                    )}
+
                     {(buscarMover || preenfrio) && (
                         <div className="filtros-activos">
-                            {preenfrio && (
-                                <span className="chip chip--azul">
-                                    {preenfrios.find((c) => String(c.id_camara) === preenfrio)?.nombre_camara}
-                                </span>
-                            )}
+                            {preenfrio && <span className="chip chip--azul">{preenfrios.find((c) => String(c.id_camara) === preenfrio)?.nombre_camara}</span>}
                             {buscarMover && <span className="chip chip--azul">"{buscarMover}"</span>}
                             <button
                                 type="button"
@@ -337,7 +465,7 @@ export default function Movimientos() {
                     ) : visiblesMover.length === 0 ? (
                         <div className="crud__vacio">
                             <Boxes size={40} />
-                            <p>{buscarMover || preenfrio ? "Nada coincide con los filtros." : "No hay fruta dentro de los preenfríos."}</p>
+                            <p>{buscarMover || preenfrio ? "Nada coincide con los filtros." : "No hay fruta suelta en los preenfríos."}</p>
                         </div>
                     ) : (
                         <div className="tabla-contenedor">
@@ -394,9 +522,7 @@ export default function Movimientos() {
                                                     {num(p.tarimas_disponibles)} tar · {num(p.cajas_disponibles)} cj
                                                 </td>
                                                 <td data-etiqueta="Criticidad">
-                                                    <span className={`chip ${CRITICIDAD[p.nivel_criticidad] ?? "chip--gris"}`}>
-                                                        {p.criticidad_texto}
-                                                    </span>
+                                                    <span className={`chip ${CRITICIDAD[p.nivel_criticidad] ?? "chip--gris"}`}>{p.criticidad_texto}</span>
                                                 </td>
                                                 {puedeMover && (
                                                     <td className="acciones">
@@ -431,7 +557,7 @@ export default function Movimientos() {
                                 type="search"
                                 value={buscarReg}
                                 onChange={(e) => setBuscarReg(e.target.value)}
-                                placeholder="Buscar lote, finca, SKU, cámara o folio…"
+                                placeholder="Buscar lote, bloque, finca, SKU, cámara o folio…"
                             />
                         </label>
                         <label className="mov__fecha">
@@ -486,6 +612,7 @@ export default function Movimientos() {
                                 <tbody>
                                     {visiblesReg.map((m) => {
                                         const esReversa = Boolean(m.observaciones?.startsWith("Reversa del movimiento #"));
+                                        const esBloque = Boolean(m.observaciones?.startsWith("Traslado bloque"));
                                         const yaRevertido = revertidos.has(m.id_movimiento);
                                         return (
                                             <tr key={m.id_movimiento} className={yaRevertido ? "fila--baja" : ""}>
@@ -500,7 +627,7 @@ export default function Movimientos() {
                                                 <td data-etiqueta="Tipo">
                                                     <div className="estados">
                                                         <span className={`chip ${esReversa ? "chip--ambar" : "chip--azul"}`}>
-                                                            {esReversa ? "Reversa" : m.tipo_texto}
+                                                            {esReversa ? "Reversa" : esBloque ? "Bloque a conserva" : m.tipo_texto}
                                                         </span>
                                                         {yaRevertido && <small>Revertido</small>}
                                                     </div>
@@ -541,7 +668,7 @@ export default function Movimientos() {
                                                 </td>
                                                 {puedeMover && (
                                                     <td className="acciones">
-                                                        {Number(m.tipo_movimiento) === 2 && !esReversa && !yaRevertido && (
+                                                        {Number(m.tipo_movimiento) === 2 && !esReversa && !esBloque && !yaRevertido && (
                                                             <button
                                                                 type="button"
                                                                 className="boton-icono boton-icono--peligro"
@@ -564,11 +691,21 @@ export default function Movimientos() {
 
                     {!cargandoReg && visiblesReg.length > 0 && (
                         <p className="crud__pie">
-                            {visiblesReg.length} movimiento(s) ·{" "}
-                            {visiblesReg.reduce((s, m) => s + num(m.cantidad_tarimas), 0)} tarimas
+                            {visiblesReg.length} movimiento(s) · {visiblesReg.reduce((s, m) => s + num(m.cantidad_tarimas), 0)} tarimas
                         </p>
                     )}
                 </section>
+            )}
+
+            {moviendoBloque && (
+                <ModalTrasladarBloque
+                    bloque={moviendoBloque.bloque}
+                    nombreOrigen={moviendoBloque.camara.nombre_camara}
+                    conservaciones={conservaciones}
+                    ubicacionOrigen={moviendoBloque.camara.ubicacion}
+                    onGuardado={alTrasladarBloque}
+                    onCerrar={() => setMoviendoBloque(null)}
+                />
             )}
 
             {moviendo && (
@@ -587,12 +724,11 @@ export default function Movimientos() {
                     descripcion={
                         <>
                             <p>
-                                Regresan <strong>{num(revirtiendo.cantidad_tarimas)} tarimas</strong> de{" "}
-                                {revirtiendo.camara_destino} a {revirtiendo.camara_origen}.
+                                Regresan <strong>{num(revirtiendo.cantidad_tarimas)} tarimas</strong> de {revirtiendo.camara_destino} a{" "}
+                                {revirtiendo.camara_origen}.
                             </p>
                             <p className="modal__advertencia">
-                                <AlertTriangle size={14} className="icono-en-linea" /> No se borra nada: queda el traslado y su
-                                reversa en el registro.
+                                <AlertTriangle size={14} className="icono-en-linea" /> No se borra nada: queda el traslado y su reversa en el registro.
                             </p>
                         </>
                     }

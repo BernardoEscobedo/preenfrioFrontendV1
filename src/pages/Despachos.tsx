@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, FileText, Lock, PackageCheck, Plus, RefreshCw, Search, ShieldAlert, ShieldQuestion, X } from "lucide-react";
 import EncabezadoPagina from "../components/layout/EncabezadoPagina";
-import DespachoFormulario from "../components/despachos/DespachoFormulario";
+import AsistenteDespacho from "../components/despachos/AsistenteDespacho";
 import DetalleDespacho from "../components/despachos/DetalleDespacho";
 import ChipInocuidad from "../components/despachos/ChipInocuidad";
 import Avisos from "../components/ui/Avisos";
@@ -16,23 +16,32 @@ import "../styles/crud.css";
 import "../styles/usuarios.css";
 import "../styles/fincas.css";
 import "../styles/despachos.css";
+import "../styles/despachoAsistente.css";
 
 // ============================================================================
 // DESPACHOS · operativo+ (cada acción con su propio rol, ver DetalleDespacho)
 // ============================================================================
 // Dos vistas en la misma página:
-//   · LISTADO   borradores y cerrados, con su estado de inocuidad
-//   · DETALLE   un documento: datos, fruta cargada, inspección y cierre
+//   · LISTADO   despachos con su estado de inocuidad
+//   · DETALLE   un documento: datos, fruta cargada, inspección y auditoría
 //
-// El backend ya recorta por alcance de cámara: un supervisor ve los
-// despachos con fruta de SUS cámaras, más los borradores vacíos.
+// "Nuevo despacho" abre el ASISTENTE: destino → fruta → línea → operador →
+// unidad (sencillo/full) → inspección y confirmación. Al confirmar, el
+// despacho se guarda CERRADO (el camión salió). Lo puede hacer quien
+// despacha (operativo+).
 //
-// Los indicadores de inspección pendiente y rechazada funcionan como
-// filtro: son lo que detiene la salida de un camión.
+// Los borradores del flujo anterior siguen viéndose y cerrándose desde el
+// detalle.
 // ============================================================================
 
 type FiltroEstado = "borradores" | "cerrados" | "todos";
 type FiltroInocuidad = "" | "pendiente" | "aprobada" | "rechazada";
+
+/** Columnas que agrega la migración del full a vw_despachos */
+type DespachoFila = Despacho & {
+    tipo_unidad?: number | null;
+    placas_caja_2?: string | null;
+};
 
 const coincideInocuidad = (d: Despacho, f: FiltroInocuidad) => {
     if (!f) return true;
@@ -47,18 +56,19 @@ export default function Despachos() {
     const { usuario } = useAuth();
     const { avisos, mostrar, quitar } = useAvisos();
 
-    const [despachos, setDespachos] = useState<Despacho[]>([]);
+    const [despachos, setDespachos] = useState<DespachoFila[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
 
     const [busqueda, setBusqueda] = useState("");
-    const [filtro, setFiltro] = useState<FiltroEstado>("borradores");
+    const [filtro, setFiltro] = useState<FiltroEstado>("cerrados");
     const [filtroInocuidad, setFiltroInocuidad] = useState<FiltroInocuidad>("");
 
     const [seleccionado, setSeleccionado] = useState<number | null>(null);
     const [creando, setCreando] = useState(false);
 
-    const puedeCrear = tieneRol(usuario, ROLES.COORDINADOR);
+    // Despacha quien está en el andén
+    const puedeCrear = tieneRol(usuario, ROLES.OPERATIVO);
 
     const cargar = useCallback(async () => {
         setCargando(true);
@@ -104,6 +114,7 @@ export default function Despachos() {
                         d.cita,
                         d.orden_venta,
                         d.placas_caja,
+                        d.placas_caja_2,
                         d.placas_tracto,
                         d.nombre_operador,
                         d.razon_social
@@ -162,6 +173,13 @@ export default function Despachos() {
             </EncabezadoPagina>
 
             <section className="crud__resumen crud__resumen--cuatro">
+                <div className="mini-kpi mini-kpi--gris">
+                    <Lock size={22} />
+                    <div>
+                        <strong>{totales.cerrados}</strong>
+                        <span>Despachados</span>
+                    </div>
+                </div>
                 <div className="mini-kpi">
                     <FileText size={22} />
                     <div>
@@ -194,13 +212,6 @@ export default function Despachos() {
                         <span>Caja rechazada</span>
                     </div>
                 </button>
-                <div className="mini-kpi mini-kpi--gris">
-                    <Lock size={22} />
-                    <div>
-                        <strong>{totales.cerrados}</strong>
-                        <span>Cerrados</span>
-                    </div>
-                </div>
             </section>
 
             <section className="panel">
@@ -230,8 +241,8 @@ export default function Despachos() {
                     <div className="segmentado" role="tablist">
                         {(
                             [
+                                ["cerrados", "Despachados"],
                                 ["borradores", "Borradores"],
-                                ["cerrados", "Cerrados"],
                                 ["todos", "Todos"]
                             ] as const
                         ).map(([valor, etiqueta]) => (
@@ -262,9 +273,7 @@ export default function Despachos() {
 
                 {hayFiltros && (
                     <div className="filtros-activos">
-                        {filtroInocuidad && (
-                            <span className="chip chip--azul">Inocuidad {filtroInocuidad}</span>
-                        )}
+                        {filtroInocuidad && <span className="chip chip--azul">Inocuidad {filtroInocuidad}</span>}
                         {busqueda && <span className="chip chip--azul">"{busqueda}"</span>}
                         <button type="button" className="enlace enlace--verde" onClick={limpiarFiltros}>
                             <X size={14} /> Quitar filtros
@@ -295,16 +304,16 @@ export default function Despachos() {
                                 : filtro === "borradores"
                                     ? "No hay despachos en borrador."
                                     : filtro === "cerrados"
-                                        ? "No hay despachos cerrados."
+                                        ? "Todavía no hay despachos."
                                         : "Todavía no hay despachos."}
                         </p>
-                        {!hayFiltros && filtro !== "cerrados" && puedeCrear && (
+                        {!hayFiltros && puedeCrear && (
                             <button
                                 type="button"
                                 className="boton boton--primario boton--auto"
                                 onClick={() => setCreando(true)}
                             >
-                                <Plus size={18} /> Crear despacho
+                                <Plus size={18} /> Nuevo despacho
                             </button>
                         )}
                     </div>
@@ -326,6 +335,7 @@ export default function Despachos() {
                             <tbody>
                                 {visibles.map((d) => {
                                     const borrador = Number(d.estado) === 1;
+                                    const full = Number(d.tipo_unidad) === 2;
                                     return (
                                         <tr
                                             key={d.id_despacho}
@@ -349,8 +359,14 @@ export default function Despachos() {
                                             </td>
                                             <td data-etiqueta="Transporte">
                                                 <div className="celda-doble">
-                                                    <span className="mono">{d.placas_caja ?? "—"}</span>
-                                                    {d.nombre_operador && <small>{d.nombre_operador}</small>}
+                                                    <span className="mono">
+                                                        {d.placas_caja ?? "—"}
+                                                        {full && d.placas_caja_2 ? ` + ${d.placas_caja_2}` : ""}
+                                                    </span>
+                                                    <small>
+                                                        {full ? "Full · " : ""}
+                                                        {d.nombre_operador ?? ""}
+                                                    </small>
                                                 </div>
                                             </td>
                                             <td data-etiqueta="Carga">
@@ -366,7 +382,7 @@ export default function Despachos() {
                                             </td>
                                             <td data-etiqueta="Estado">
                                                 <span className={`chip ${borrador ? "chip--azul" : "chip--gris"}`}>
-                                                    {borrador ? "Borrador" : "Cerrado"}
+                                                    {borrador ? "Borrador" : "Despachado"}
                                                 </span>
                                             </td>
                                             <td className="acciones">
@@ -399,15 +415,13 @@ export default function Despachos() {
             </section>
 
             {creando && (
-                <DespachoFormulario
-                    modo="alta"
-                    despacho={null}
-                    onGuardado={(mensaje, avisosAlta, id) => {
+                <AsistenteDespacho
+                    onGuardado={(r) => {
                         setCreando(false);
-                        mostrar("exito", mensaje);
-                        (avisosAlta ?? []).forEach((a) => mostrar("info", a));
+                        mostrar("exito", r.mensaje);
+                        (r.avisos ?? []).forEach((a) => mostrar("info", a));
+                        setFiltro("cerrados");
                         cargar();
-                        if (id) setSeleccionado(id);
                     }}
                     onCerrar={() => setCreando(false)}
                 />

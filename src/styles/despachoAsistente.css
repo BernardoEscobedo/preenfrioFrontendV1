@@ -1,0 +1,161 @@
+/* ============================================================================
+   ASISTENTE DE DESPACHO · pasos, stock, piezas e inspección
+   Complementa crud.css, usuarios.css, fincas.css y despachos.css
+   ============================================================================ */
+
+/* ---- Pasos ---- */
+.asistente__pasos {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+}
+.asistente__paso {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gris-600);
+    background: var(--gris-100);
+    border-radius: 99px;
+}
+.asistente__paso span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 0.72rem;
+    background: #fff;
+    border-radius: 50%;
+}
+.asistente__paso--actual { color: #fff; background: var(--verde-700); }
+.asistente__paso--actual span { color: var(--verde-700); }
+.asistente__paso--hecho { color: var(--verde-700); background: #e6f4ec; }
+
+.asistente__cuerpo { display: flex; flex-direction: column; gap: 12px; }
+
+.asistente__buscar {
+    padding: 10px 12px;
+    font: inherit;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 10px;
+}
+
+.asistente__barra { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* ---- Tarjetas (destino y línea) ---- */
+.asistente__tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+.asistente__tarjeta {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    text-align: left;
+    color: var(--gris-900);
+    background: #fff;
+    border: 2px solid var(--gris-300);
+    border-radius: 12px;
+    cursor: pointer;
+}
+.asistente__tarjeta svg { flex-shrink: 0; color: var(--verde-700); }
+.asistente__tarjeta div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.asistente__tarjeta small { color: var(--gris-600); }
+.asistente__tarjeta:hover { border-color: var(--verde-500); }
+.asistente__tarjeta--activa { background: #f2faf5; border-color: var(--verde-700); }
+
+/* ---- Stock ---- */
+.asistente__stock { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+.stock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 12px;
+}
+.stock--activo { background: #f2faf5; border-color: var(--verde-500); }
+.stock--otro { border-style: dashed; }
+.stock__elegir { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.stock__elegir input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--verde-700); }
+.stock__elegir div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stock__elegir small { color: var(--gris-600); }
+.stock__lado { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 0.85rem; white-space: nowrap; }
+.stock__cantidades { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ---- Piezas ---- */
+.pieza { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1.5px solid var(--gris-300); border-radius: 12px; }
+.pieza--error { border-color: var(--rojo); }
+.pieza__cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pieza__cambiar { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+.pieza select,
+.inspeccion input,
+.asistente__buscar {
+    width: 100%;
+}
+.pieza select {
+    padding: 10px 12px;
+    font: inherit;
+    border: 1.5px solid var(--gris-300);
+    border-radius: 10px;
+}
+.pieza__vacio { margin: 0; font-size: 0.88rem; color: var(--gris-600); }
+.asistente__unidad { align-self: flex-start; }
+.asistente__unidad button { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---- Confirmar ---- */
+.asistente__resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--gris-100);
+    border-radius: 12px;
+}
+.asistente__resumen div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.asistente__resumen small {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-600);
+}
+.asistente__resumen strong { font-size: 0.9rem; overflow-wrap: anywhere; }
+.asistente__subtitulo { margin: 6px 0 0; font-size: 0.98rem; }
+
+.inspeccion { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1.5px solid var(--gris-300); border-radius: 12px; }
+.inspeccion--rechazada { background: var(--rojo-100); border-color: #f5c6c0; }
+.inspeccion .segmentado button { display: inline-flex; align-items: center; gap: 6px; }
+.inspeccion input { padding: 8px 10px; font: inherit; border: 1.5px solid var(--gris-300); border-radius: 10px; }
+
+.asistente__confirma { display: flex; margin-top: 8px; }
+.asistente__aviso {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    color: var(--verde-700);
+    background: #f2faf5;
+    border-radius: 10px;
+}
+
+.interruptor { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.interruptor input { width: 18px; height: 18px; accent-color: var(--verde-700); }
+
+@media (max-width: 760px) {
+    .stock { grid-template-columns: 1fr; }
+    .stock__lado { align-items: flex-start; }
+}
