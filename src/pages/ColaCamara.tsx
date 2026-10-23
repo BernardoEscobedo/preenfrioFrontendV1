@@ -211,7 +211,7 @@ export default function ColaCamara() {
                                     <strong>{num(c.tarimas_ocupadas)}</strong>/{c.capacidad_max_tarimas} dentro
                                 </span>
                                 <span>
-                                    <strong>{num(c.tarimas_en_espera)}</strong> en cola
+                                    <strong>{num(c.tarimas_en_espera)}</strong> en espera
                                 </span>
                                 {criticas > 0 && (
                                     <span className="cola__critico">
@@ -260,7 +260,7 @@ export default function ColaCamara() {
                             <section className="panel">
                                 <div className="panel__titulo">
                                     <h2>
-                                        <Snowflake size={20} /> Dentro de {camara.nombre_camara}
+                                        <Snowflake size={20} /> Procesos en {camara.nombre_camara}
                                     </h2>
                                     <span className="chip chip--azul">
                                         {totalDentro}/{camara.capacidad_max_tarimas} tarimas
