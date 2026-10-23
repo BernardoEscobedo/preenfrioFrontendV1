@@ -1,27 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import Modal from "../ui/Modal";
 import { mensajeError } from "../../api/axios";
-import * as recepcionesService from "../../services/recepciones.service";
+import * as temporalesService from "../../services/temporales.service";
 import { fechaCorta, hoyISO } from "../../utils/formato";
 import type { LineaEsperada, RespuestaLote, TipoCierre } from "../../types/recepcion";
+import type { OpcionRecepcion } from "../../types/temporal";
 
 // ============================================================================
 // RECIBIR UN PROCESO · operativo+
 // ============================================================================
-// Un proceso = una línea de producción (lote + SKU + destino). Se abre desde
-// su fila en el listado y se captura solo ese proceso.
+// Un proceso = una línea de producción (lote + SKU + destino).
 //
 //   Completa   ya no llega más → se compara contra el plan
 //   Parcial    llega más después (otro camión u otro día)
 //   No llegó   hoy no llegó nada → alerta; el proceso sigue abierto
 //
-// Las cantidades NO se precargan: se cuentan y se capturan. "= Plan" llena
-// lo pendiente cuando sí cuadra.
+// RECIBIR EN
+//   Por defecto, el preenfrío planeado. Si está FUERA DE SERVICIO, la base
+//   no deja recibir ahí: se propone su caja temporal (si hay una abierta) u
+//   otro preenfrío operando. La fruta queda en el inventario de esa cámara.
 //
 // SIN TOLERANCIA: en "Completa", una caja de más o de menos ya es alerta.
-// Usa el mismo endpoint que el lote (POST /recepciones/lote) con una sola
-// línea: el backend no cambia.
 // ============================================================================
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0);
@@ -54,6 +54,33 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
     const [error, setError] = useState("");
     const [enviando, setEnviando] = useState(false);
 
+    // ---- Dónde se recibe ----
+    const [planeadaFuera, setPlaneadaFuera] = useState(false);
+    const [opciones, setOpciones] = useState<OpcionRecepcion[]>([]);
+    const [destino, setDestino] = useState(String(linea.id_camara));
+
+    useEffect(() => {
+        let vivo = true;
+        temporalesService
+            .getDestinosRecepcion(linea.id_camara)
+            .then((r) => {
+                if (!vivo) return;
+                const fuera = Boolean(r.planeada?.bloqueada);
+                setPlaneadaFuera(fuera);
+                setOpciones(r.opciones);
+                if (fuera) {
+                    const caja = r.opciones.find((o) => o.es_temporal && Number(o.id_camara_origen) === Number(linea.id_camara));
+                    setDestino(caja ? String(caja.id_camara) : "");
+                }
+            })
+            .catch(() => {
+                // Si falla, se recibe en la planeada como siempre
+            });
+        return () => {
+            vivo = false;
+        };
+    }, [linea.id_camara]);
+
     const planCajas = num(linea.cajas_esperadas);
     const planTarimas = num(linea.tarimas_esperadas);
     const yaCajas = num(linea.cajas_recibidas);
@@ -68,6 +95,7 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
     const difTarimas = totalTarimas - planTarimas;
     const conDiferencia = cierre === "completa" && (difCajas !== 0 || difTarimas !== 0);
     const capturo = cajas !== "" || tarimas !== "";
+    const llegaFruta = cierre !== "no_llego" && nCajas + nTarimas > 0;
 
     const elegirCierre = (c: TipoCierre) => {
         setCierre(c);
@@ -99,6 +127,7 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
             const t = Number(temperatura);
             if (isNaN(t) || t < -5 || t > 45) return "La temperatura debe estar entre -5 y 45 °C";
         }
+        if (llegaFruta && !destino) return `${linea.nombre_camara} está fuera de servicio: elige dónde recibir (caja temporal u otro preenfrío)`;
         return null;
     };
 
@@ -111,9 +140,11 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
         setError("");
         setEnviando(true);
         try {
-            const r = await recepcionesService.recibirLote({
+            const idDestino = destino && Number(destino) !== Number(linea.id_camara) ? Number(destino) : null;
+            const r = await temporalesService.recibirEn({
                 fecha_recepcion: fecha,
                 hora_recepcion: hora,
+                id_camara: idDestino,
                 temperatura: temperatura.trim() === "" ? null : Number(temperatura),
                 observaciones: observaciones.trim() || null,
                 lineas: [
@@ -132,6 +163,8 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
             setEnviando(false);
         }
     };
+
+    const opcionesValidas = opciones.filter((o) => !o.bloqueada);
 
     return (
         <Modal
@@ -178,6 +211,13 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
                     </div>
                 )}
             </div>
+
+            {planeadaFuera && (
+                <div className="alerta alerta--aviso">
+                    <AlertTriangle size={16} className="icono-en-linea" /> {linea.nombre_camara} está fuera de servicio: la fruta se recibe en
+                    su caja temporal u otro preenfrío.
+                </div>
+            )}
 
             {error && <div className="alerta alerta--error">{error}</div>}
 
@@ -228,6 +268,25 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
                                 Llenar con lo pendiente del plan
                             </button>
                         </label>
+
+                        {(planeadaFuera || opcionesValidas.length > 1) && (
+                            <label className="campo campo--completo">
+                                <span>Recibir en</span>
+                                <select value={destino} onChange={(e) => setDestino(e.target.value)} disabled={enviando}>
+                                    <option value="">{planeadaFuera ? "Elige dónde recibir…" : "Selecciona…"}</option>
+                                    {opcionesValidas.map((o) => (
+                                        <option key={o.id_camara} value={o.id_camara}>
+                                            {o.nombre_camara}
+                                            {o.es_temporal ? " · caja temporal" : Number(o.id_camara) === Number(linea.id_camara) ? " · planeada" : ""} ·{" "}
+                                            {Math.max(num(o.espacio), 0)} libres
+                                        </option>
+                                    ))}
+                                </select>
+                                {planeadaFuera && opcionesValidas.every((o) => !o.es_temporal) && (
+                                    <small className="campo__ayuda">No hay caja temporal abierta para esta cámara: ábrela en Mantenimientos o recibe en otro preenfrío.</small>
+                                )}
+                            </label>
+                        )}
                     </>
                 )}
 
@@ -273,8 +332,7 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
 
             {cierre === "completa" && (capturo || yaRecibio) && (
                 <p className={`recibir__previa ${conDiferencia ? "recibir__previa--alerta" : ""}`}>
-                    {conDiferencia ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />} Total {totalCajas} cj ·{" "}
-                    {totalTarimas} tar
+                    {conDiferencia ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />} Total {totalCajas} cj · {totalTarimas} tar
                     {conDiferencia
                         ? ` — diferencia ${difCajas > 0 ? "+" : ""}${difCajas} cj, ${difTarimas > 0 ? "+" : ""}${difTarimas} tar. Se enviará alerta al coordinador.`
                         : " — cuadra con el plan."}
@@ -282,8 +340,7 @@ export default function ModalRecibirProceso({ linea, onGuardado, onCerrar }: Pro
             )}
             {cierre === "parcial" && capturo && (
                 <p className="recibir__previa">
-                    <CheckCircle2 size={16} /> Llevará {totalCajas} cj · {totalTarimas} tar de {planCajas} cj · {planTarimas} tar.
-                    El proceso sigue abierto.
+                    <CheckCircle2 size={16} /> Llevará {totalCajas} cj · {totalTarimas} tar de {planCajas} cj · {planTarimas} tar. El proceso sigue abierto.
                 </p>
             )}
             {cierre === "no_llego" && (

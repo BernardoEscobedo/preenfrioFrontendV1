@@ -78,7 +78,7 @@ export interface NuevoMantenimiento {
     observaciones: string | null;
 }
 
-/** Lote dentro de una cámara (para reubicar) */
+/** Lote dentro de una cámara (para sacarlo) */
 export interface FrutaDentro {
     id_ocupacion: number;
     id_produccion: number | null;
@@ -100,4 +100,7 @@ export interface FrutaDentro {
 export interface RespuestaMantenimiento {
     mensaje: string;
     avisos?: string[];
+    /** La cámara quedó fuera de servicio con fruta: hay que sacarla */
+    requiere_reubicar?: boolean;
+    id_camara?: number;
 }

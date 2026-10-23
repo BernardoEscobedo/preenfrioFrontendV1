@@ -7,22 +7,25 @@ import { fechaCorta } from "../../utils/formato";
 import type { CamaraMantenimiento, FrutaDentro } from "../../types/mantenimiento";
 
 // ============================================================================
-// FRUTA POR REUBICAR
+// FRUTA POR SACAR (obligatorio)
 // ============================================================================
-// La cámara está fuera de servicio y todavía tiene fruta dentro. El bloqueo
-// no la saca: hay que trasladarla a otra cámara o despacharla.
+// La cámara está fuera de servicio y todavía tiene fruta. Hay que sacarla:
+//   · Sacar fruta  → a una caja temporal (línea fletera) u otra cámara
+//   · Despachar    → módulo de Despachos
+// El mantenimiento no se puede finalizar mientras haya fruta dentro.
 // ============================================================================
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0);
 const CRITICIDAD: Record<number, string> = { 1: "chip--rojo", 2: "chip--ambar", 3: "chip--azul", 4: "chip--gris" };
 
-export default function PanelFruta({ camara }: { camara: CamaraMantenimiento }) {
+export default function PanelFruta({ camara, onSacar }: { camara: CamaraMantenimiento; onSacar: () => void }) {
     const [lotes, setLotes] = useState<FrutaDentro[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         let vivo = true;
+        setCargando(true);
         mantenimientosService
             .getFrutaDentro(camara.id_camara)
             .then((l) => vivo && setLotes(l))
@@ -38,12 +41,13 @@ export default function PanelFruta({ camara }: { camara: CamaraMantenimiento }) 
             <div className="mant__fruta-cabeza">
                 <AlertTriangle size={18} />
                 <strong>
-                    Fruta por reubicar: {camara.tarimas_dentro} tarima(s) · {camara.cajas_dentro} cajas
+                    Hay que sacar la fruta: {camara.tarimas_dentro} tarima(s) · {camara.cajas_dentro} cajas
+                    {camara.tarimas_en_cola ? ` · ${camara.tarimas_en_cola} en cola` : ""}
                 </strong>
                 <div className="mant__fruta-acciones">
-                    <Link to="/movimientos" className="boton boton--claro boton--auto boton--chico">
-                        <ArrowRightLeft size={14} /> Trasladar
-                    </Link>
+                    <button type="button" className="boton boton--primario boton--auto boton--chico" onClick={onSacar}>
+                        <ArrowRightLeft size={14} /> Sacar fruta
+                    </button>
                     <Link to="/despachos" className="boton boton--claro boton--auto boton--chico">
                         <PackageCheck size={14} /> Despachar
                     </Link>
@@ -61,8 +65,7 @@ export default function PanelFruta({ camara }: { camara: CamaraMantenimiento }) 
                                 {l.codigo_sku} · {l.codigo_productor} {l.codigo_finca} {l.nombre_finca}
                             </span>
                             <small>
-                                {num(l.tarimas_disponibles)} tar · {num(l.cajas_disponibles)} cj · {l.acronimo_cc ?? ""} · empaque{" "}
-                                {fechaCorta(l.fecha_empaque)}
+                                {num(l.tarimas_disponibles)} tar · {num(l.cajas_disponibles)} cj · {l.acronimo_cc ?? ""} · empaque {fechaCorta(l.fecha_empaque)}
                             </small>
                             <span className={`chip ${CRITICIDAD[l.nivel_criticidad] ?? "chip--gris"}`}>{l.criticidad_texto}</span>
                         </li>

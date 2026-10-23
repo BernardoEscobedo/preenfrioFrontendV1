@@ -1,5 +1,5 @@
 /* ============================================================================
-   MANTENIMIENTOS · tarjetas por cámara, fruta por reubicar e historial
+   MANTENIMIENTOS · tarjetas por cámara, fruta por sacar, cajas temporales
    Complementa crud.css, usuarios.css y fincas.css
    ============================================================================ */
 
@@ -13,9 +13,11 @@
 }
 .mant__camara { display: flex; flex-direction: column; gap: 12px; border-left: 5px solid var(--verde-500); }
 .mant__camara--fuera { border-left-color: var(--rojo); background: #fffafa; }
+.mant__camara--caja { border-left-color: #1d5fa8; }
 
 .mant__cabeza { display: flex; align-items: center; gap: 8px; color: var(--verde-700); }
 .mant__camara--fuera .mant__cabeza { color: var(--rojo); }
+.mant__camara--caja .mant__cabeza { color: #1d5fa8; }
 .mant__cabeza strong { color: var(--gris-900); font-size: 1.02rem; }
 .mant__cabeza .chip { margin-left: auto; }
 
@@ -37,8 +39,9 @@
 .mant__programado small { color: var(--gris-600); }
 
 .mant__acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+.mant__aviso-final { color: var(--gris-600); }
 
-/* ---- Fruta por reubicar ---- */
+/* ---- Fruta por sacar ---- */
 .mant__fruta {
     display: flex;
     flex-direction: column;
@@ -51,11 +54,16 @@
 .mant__fruta-cabeza { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #8a4b0f; }
 .mant__fruta-cabeza strong { color: var(--gris-900); }
 .mant__fruta-acciones { display: flex; gap: 6px; margin-left: auto; }
-.mant__fruta-acciones a { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+.mant__fruta-acciones a,
+.mant__fruta-acciones button { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
 .mant__lotes { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .mant__lotes li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 8px; background: #fff; border-radius: 8px; }
 .mant__lotes small { color: var(--gris-600); }
 .mant__lotes .chip { margin-left: auto; }
+
+/* ---- Sacar la fruta ---- */
+.reubicar__modos { margin: 4px 0 12px; flex-wrap: wrap; }
+.reubicar__modos button { display: inline-flex; align-items: center; gap: 6px; }
 
 .mant__fecha { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--gris-600); }
 .mant__fecha input { padding: 8px 10px; font: inherit; border: 1.5px solid var(--gris-300); border-radius: 10px; }
