@@ -1,0 +1,60 @@
+/* ============================================================================
+   MOVIMIENTOS · stock por cámara, traslado y registro
+   Complementa crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+.mov__stock {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+}
+.mov__camara {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1.5px solid var(--gris-300);
+    border-left: 5px solid var(--verde-500);
+    border-radius: 14px;
+}
+.mov__camara--conserva { border-left-color: #1d5fa8; }
+.mov__camara-cabeza { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--verde-700); }
+.mov__camara--conserva .mov__camara-cabeza { color: #1d5fa8; }
+.mov__camara-cabeza strong { color: var(--gris-900); }
+.mov__camara-cabeza .chip { margin-left: auto; }
+.mov__camara-datos { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; color: var(--gris-600); }
+.mov__camara-datos strong { color: var(--gris-900); }
+.mov__alerta { font-weight: 700; color: var(--rojo); }
+
+.mov__barra { height: 8px; background: var(--gris-100); border-radius: 99px; overflow: hidden; }
+.mov__barra span { display: block; height: 100%; background: var(--verde-500); border-radius: 99px; }
+.mov__camara--conserva .mov__barra span { background: #1d5fa8; }
+.mov__barra span.llena { background: var(--rojo) !important; }
+
+.mov__pestanas { align-self: flex-start; }
+.mov__pestanas button { display: inline-flex; align-items: center; gap: 6px; }
+
+.mov__fecha { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--gris-600); }
+.mov__fecha input { padding: 8px 10px; font: inherit; border: 1.5px solid var(--gris-300); border-radius: 10px; }
+
+.mov__resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: var(--gris-100);
+    border-radius: 12px;
+}
+.mov__resumen div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mov__resumen small {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-600);
+}
+.mov__resumen strong { font-size: 0.92rem; overflow-wrap: anywhere; }
+
+.boton--chico { min-height: 34px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }

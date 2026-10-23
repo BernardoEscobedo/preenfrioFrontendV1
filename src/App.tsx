@@ -22,7 +22,7 @@ import Despachos from "./pages/Despachos";
 import Produccion from "./pages/Produccion";
 import Recepciones from "./pages/Recepciones";
 import ColaCamara from "./pages/ColaCamara";
-
+import Movimientos from "./pages/Movimientos";
 
 // ============================================================================
 // RUTAS
@@ -47,6 +47,7 @@ const MODULOS: Record<string, ReactElement> = {
     "/recepciones": <Recepciones />,
     // La llave debe ser idéntica a la ruta de menu.ts ("/cola")
     "/cola": <ColaCamara />,
+    "/movimientos": <Movimientos />,
     "/produccion": <Produccion />,
     "/despachos": <Despachos />,
     "/usuarios": <Usuarios />
