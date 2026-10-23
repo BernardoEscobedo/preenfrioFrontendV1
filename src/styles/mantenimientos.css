@@ -1,0 +1,68 @@
+/* ============================================================================
+   MANTENIMIENTOS · tarjetas por cámara, fruta por reubicar e historial
+   Complementa crud.css, usuarios.css y fincas.css
+   ============================================================================ */
+
+.mant__pestanas { align-self: flex-start; }
+.mant__pestanas button { display: inline-flex; align-items: center; gap: 6px; }
+
+.mant__camaras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+.mant__camara { display: flex; flex-direction: column; gap: 12px; border-left: 5px solid var(--verde-500); }
+.mant__camara--fuera { border-left-color: var(--rojo); background: #fffafa; }
+
+.mant__cabeza { display: flex; align-items: center; gap: 8px; color: var(--verde-700); }
+.mant__camara--fuera .mant__cabeza { color: var(--rojo); }
+.mant__cabeza strong { color: var(--gris-900); font-size: 1.02rem; }
+.mant__cabeza .chip { margin-left: auto; }
+
+.mant__estado { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.mant__estado small { color: var(--gris-600); }
+
+.mant__programado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #1d5fa8;
+    background: #f2f7fd;
+    border: 1px solid #c4dbf3;
+    border-radius: 10px;
+}
+.mant__programado div { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.mant__programado strong { color: var(--gris-900); font-size: 0.9rem; }
+.mant__programado small { color: var(--gris-600); }
+
+.mant__acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+
+/* ---- Fruta por reubicar ---- */
+.mant__fruta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--ambar-100);
+    border: 1px solid #f3e0a8;
+    border-radius: 12px;
+}
+.mant__fruta-cabeza { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #8a4b0f; }
+.mant__fruta-cabeza strong { color: var(--gris-900); }
+.mant__fruta-acciones { display: flex; gap: 6px; margin-left: auto; }
+.mant__fruta-acciones a { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+.mant__lotes { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.mant__lotes li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 8px; background: #fff; border-radius: 8px; }
+.mant__lotes small { color: var(--gris-600); }
+.mant__lotes .chip { margin-left: auto; }
+
+.mant__fecha { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--gris-600); }
+.mant__fecha input { padding: 8px 10px; font: inherit; border: 1.5px solid var(--gris-300); border-radius: 10px; }
+.mant__cierre { color: var(--verde-700) !important; }
+
+.boton--chico { min-height: 34px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
+
+@media (max-width: 560px) {
+    .mant__camaras { grid-template-columns: 1fr; }
+}

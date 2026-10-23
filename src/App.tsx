@@ -24,6 +24,7 @@ import Recepciones from "./pages/Recepciones";
 import ColaCamara from "./pages/ColaCamara";
 import Movimientos from "./pages/Movimientos";
 import BloquesPulpeos from "./pages/BloquesPulpeos";
+import Mantenimientos from "./pages/Mantenimientos";
 
 // ============================================================================
 // RUTAS
@@ -52,6 +53,7 @@ const MODULOS: Record<string, ReactElement> = {
     "/produccion": <Produccion />,
     "/despachos": <Despachos />,
     "/pulpeos": <BloquesPulpeos />,
+    "/mantenimientos": <Mantenimientos />,
     "/usuarios": <Usuarios />
 };
 
