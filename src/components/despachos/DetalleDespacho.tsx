@@ -31,6 +31,7 @@ import * as despachosService from "../../services/despachos.service";
 import { fechaCorta, fechaHora, horaCorta } from "../../utils/formato";
 import type { TipoAviso } from "../../hooks/useAvisos";
 import type { DespachoCompleto, LineaDespacho, LineaOtroCliente } from "../../types/despacho";
+import BotonPackingList from "./BotonPackingList";
 
 // ============================================================================
 // DETALLE DEL DESPACHO
@@ -501,6 +502,7 @@ export default function DetalleDespacho({ idDespacho, onVolver, onCambio, mostra
 
                     {(puedeCerrar || esAdmin) && (
                         <section className="panel acciones-doc">
+                            <BotonPackingList idDespacho={despacho.id_despacho} onError={(m) => mostrar("error", m)} />
                             {puedeCerrar && (
                                 <>
                                     <button
