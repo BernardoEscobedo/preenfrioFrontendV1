@@ -1,6 +1,8 @@
 // ============================================================================
 // TIPOS · DESPACHO EN UN PASO (asistente)
 // ============================================================================
+// La fruta sale por TARIMA de bloque, entera (completa, media o mixta).
+// ============================================================================
 
 type Num = number | string;
 
@@ -17,30 +19,47 @@ export interface ClienteDisponible {
     nivel_criticidad: number;
 }
 
-/** Proceso en stock (GET /despachos/inventario) */
-export interface StockProceso {
-    id_ocupacion: number;
-    id_camara: number;
-    nombre_camara: string;
-    tipo_camara_texto: string;
-    tarimas_disponibles: Num;
-    cajas_disponibles: Num;
+/** Lote dentro de una tarima de bloque */
+export interface LoteEnTarima {
+    id_produccion: number;
+    cantidad_cajas: number;
     codigo_lote: string | null;
-    fecha_empaque: string | null;
-    fecha_entrega: string | null;
+    codigo_sku: string | null;
+    calidad_sku: string | null;
     codigo_finca: string | null;
     nombre_finca: string | null;
     codigo_productor: string | null;
-    nombre_productor: string | null;
-    codigo_sku: string | null;
-    calidad_sku: string | null;
     id_cc: number | null;
-    cliente: string | null;
-    cedis: string | null;
     acronimo_cc: string | null;
-    nivel_criticidad: 1 | 2 | 3 | 4;
-    criticidad_texto: string;
-    es_de_otro_cliente: boolean;
+    fecha_empaque: string | null;
+}
+
+/** Tarima física de un bloque (GET /despachos/tarimas) */
+export interface TarimaDespacho {
+    id_tarima: number;
+    posicion: number;
+    id_camara: number;
+    nombre_camara: string;
+    horas: Num | null;
+    ultima_temperatura: Num | null;
+    cajas: number;
+    fecha_empaque: string | null;
+    lotes: LoteEnTarima[];
+    mixta: boolean;
+    de_otro_cliente: boolean;
+}
+
+export interface BloqueDespacho {
+    id_bloque: number;
+    codigo_bloque: string;
+    posiciones: number;
+    tarimas: TarimaDespacho[];
+}
+
+export interface TarimasDisponibles {
+    bloques: BloqueDespacho[];
+    /** Fruta del cliente que no está armada en bloques (hay que armarla) */
+    sin_bloque: { lotes: number; cajas: number };
 }
 
 /** Una pieza elegida de la lista o dada de alta en el momento */
@@ -60,7 +79,7 @@ export interface DespachoCompletoPayload {
     temperatura_salida: number | null;
     observaciones: string | null;
     confirmar_reasignacion: boolean;
-    lineas: { id_ocupacion_origen: number; cantidad_tarimas: number; cantidad_cajas: number }[];
+    id_tarimas: number[];
     transporte: {
         id_linea_fletera: number;
         operador: Pieza<NuevoOperador>;

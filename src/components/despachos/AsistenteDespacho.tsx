@@ -6,6 +6,7 @@ import {
     Check,
     CheckCircle2,
     Container,
+    Layers,
     ShieldAlert,
     ShieldCheck,
     Store,
@@ -27,29 +28,32 @@ import type { Operador } from "../../types/operador";
 import type { Tractocamion } from "../../types/tractocamion";
 import type { CajaRefrigerada } from "../../types/cajaRefrigerada";
 import type {
+    BloqueDespacho,
     ClienteDisponible,
     DespachoCompletoPayload,
     NuevaCaja,
     Pieza,
     RespuestaDespachoCompleto,
-    StockProceso
+    TarimaDespacho
 } from "../../types/despachoNuevo";
+import "../../styles/despachoTarimas.css";
 
 // ============================================================================
 // ASISTENTE DE DESPACHO · operativo+
 // ============================================================================
-// Así se despacha en el andén:
-//
 //   1 Destino     cliente/CEDIS al que va el camión
-//   2 Fruta       procesos del stock y cuánto sale de cada uno
+//   2 Fruta       TARIMAS de los bloques que suben al camión
 //   3 Línea       línea fletera registrada
 //   4 Operador    de esa línea (o independiente) · alta ahí mismo
 //   5 Unidad      tracto + sencillo (1 caja) o full (2 cajas) · altas
 //   6 Confirmar   inspección de cada caja y datos de salida
 //
+// LA FRUTA SALE POR TARIMA
+//   Se toca la tarima física armada en el bloque: completa, media o mixta.
+//   Sube entera, con lo que lleva; no se capturan cajas ni tarimas. Al
+//   confirmar, la tarima sale de su bloque.
+//
 // Al confirmar se guarda TODO y el despacho queda CERRADO (el camión salió).
-// Si una caja no pasa la inspección, no se carga: no se puede confirmar.
-// Nada se guarda en la BD hasta el último paso.
 // ============================================================================
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0);
@@ -62,9 +66,6 @@ const horaActual = () => {
 
 const PASOS = ["Destino", "Fruta", "Línea", "Operador", "Unidad", "Confirmar"] as const;
 
-const CRITICIDAD: Record<number, string> = { 1: "chip--rojo", 2: "chip--ambar", 3: "chip--azul", 4: "chip--gris" };
-
-/** Estado de una pieza: elegida de la lista o capturada nueva */
 interface EstadoPieza<N> {
     nuevo: boolean;
     id: string;
@@ -110,11 +111,12 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
     const [idCc, setIdCc] = useState<number | null>(null);
     const [buscarCliente, setBuscarCliente] = useState("");
 
-    // ---- 2 Fruta ----
-    const [stock, setStock] = useState<StockProceso[]>([]);
+    // ---- 2 Fruta (tarimas) ----
+    const [bloques, setBloques] = useState<BloqueDespacho[]>([]);
+    const [sinBloque, setSinBloque] = useState({ lotes: 0, cajas: 0 });
     const [todos, setTodos] = useState(false);
-    const [cargandoStock, setCargandoStock] = useState(false);
-    const [seleccion, setSeleccion] = useState<Record<number, { tarimas: string; cajas: string }>>({});
+    const [cargandoTarimas, setCargandoTarimas] = useState(false);
+    const [elegidas, setElegidas] = useState<Set<number>>(new Set());
     const [confirmaReasignacion, setConfirmaReasignacion] = useState(false);
 
     // ---- 3 a 5 Transporte ----
@@ -170,16 +172,20 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
         };
     }, []);
 
-    // ---- Stock del destino ----
+    // ---- Tarimas del destino ----
     useEffect(() => {
         if (idCc === null) return;
         let vivo = true;
-        setCargandoStock(true);
+        setCargandoTarimas(true);
         despachoService
-            .getInventario(idCc, todos)
-            .then((s) => vivo && setStock(s))
+            .getTarimas(idCc, todos)
+            .then((r) => {
+                if (!vivo) return;
+                setBloques(r.bloques);
+                setSinBloque(r.sin_bloque);
+            })
             .catch((e) => vivo && setError(mensajeError(e)))
-            .finally(() => vivo && setCargandoStock(false));
+            .finally(() => vivo && setCargandoTarimas(false));
         return () => {
             vivo = false;
         };
@@ -195,10 +201,40 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
         return t ? clientes.filter((c) => normalizar(`${c.cliente} ${c.cedis} ${c.acronimo_cc}`).includes(t)) : clientes;
     }, [clientes, buscarCliente]);
 
-    const elegidos = stock.filter((s) => seleccion[s.id_ocupacion]);
-    const totalTar = elegidos.reduce((s, p) => s + num(seleccion[p.id_ocupacion].tarimas), 0);
-    const totalCaj = elegidos.reduce((s, p) => s + num(seleccion[p.id_ocupacion].cajas), 0);
-    const hayOtroCliente = elegidos.some((p) => p.es_de_otro_cliente);
+    const todasTarimas = useMemo(() => bloques.flatMap((b) => b.tarimas), [bloques]);
+    const seleccion = todasTarimas.filter((t) => elegidas.has(t.id_tarima));
+    const totalTar = seleccion.length;
+    const totalCaj = seleccion.reduce((s, t) => s + num(t.cajas), 0);
+    const hayOtroCliente = seleccion.some((t) => t.de_otro_cliente);
+
+    // Lo que viaja, por lote
+    const porLote = useMemo(() => {
+        const m = new Map<number, { lote: string; sku: string; cajas: number }>();
+        for (const t of seleccion) {
+            for (const l of t.lotes) {
+                const a = m.get(l.id_produccion) ?? { lote: l.codigo_lote ?? "—", sku: l.codigo_sku ?? "", cajas: 0 };
+                a.cajas += num(l.cantidad_cajas);
+                m.set(l.id_produccion, a);
+            }
+        }
+        return [...m.values()];
+    }, [seleccion]);
+
+    const alternarTarima = (id: number) =>
+        setElegidas((s) => {
+            const n = new Set(s);
+            if (n.has(id)) n.delete(id);
+            else n.add(id);
+            return n;
+        });
+
+    const alternarBloque = (b: BloqueDespacho) =>
+        setElegidas((s) => {
+            const n = new Set(s);
+            const todasDentro = b.tarimas.every((t) => n.has(t.id_tarima));
+            b.tarimas.forEach((t) => (todasDentro ? n.delete(t.id_tarima) : n.add(t.id_tarima)));
+            return n;
+        });
 
     const opcionesOperador = operadores
         .filter((o) => compatible(o.id_linea_fletera))
@@ -221,7 +257,6 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                 detalle: `Eco ${c.numero_economico}${c.largo_pies ? ` · ${c.largo_pies}'` : ""}`
             }));
 
-    // Al cambiar de línea se sueltan las piezas que eran de otra
     const cambiarLinea = (v: string) => {
         setIdLinea(v);
         const nueva = v ? Number(v) : null;
@@ -238,45 +273,12 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
         );
     };
 
-    const alternarProceso = (p: StockProceso) =>
-        setSeleccion((s) => {
-            const n = { ...s };
-            if (n[p.id_ocupacion]) delete n[p.id_ocupacion];
-            else n[p.id_ocupacion] = { tarimas: String(num(p.tarimas_disponibles)), cajas: String(num(p.cajas_disponibles)) };
-            return n;
-        });
-
-    const cambiarCantidad = (p: StockProceso, campo: "tarimas" | "cajas", v: string) =>
-        setSeleccion((s) => {
-            const actual = s[p.id_ocupacion];
-            const nuevo = { ...actual, [campo]: v };
-            // Cajas en proporción a las tarimas mientras no se toquen a mano
-            if (campo === "tarimas") {
-                const t = Number(v);
-                const maxT = num(p.tarimas_disponibles);
-                const maxC = num(p.cajas_disponibles);
-                if (v !== "" && !isNaN(t)) nuevo.cajas = String(t >= maxT ? maxC : maxT > 0 ? Math.round((maxC / maxT) * t) : 0);
-            }
-            return { ...s, [p.id_ocupacion]: nuevo };
-        });
-
     // ---- Validación por paso ----
     const errorPaso = (p: number): string | null => {
         if (p === 0) return idCc === null ? "Elige el destino del despacho." : null;
 
         if (p === 1) {
-            if (elegidos.length === 0) return "Elige al menos un proceso.";
-            for (const e of elegidos) {
-                const s = seleccion[e.id_ocupacion];
-                const t = Number(s.tarimas || 0);
-                const c = Number(s.cajas || 0);
-                const lote = e.codigo_lote ?? `#${e.id_ocupacion}`;
-                if (!Number.isInteger(t) || t < 0 || !Number.isInteger(c) || c < 0) return `${lote}: cantidades inválidas.`;
-                if (t === 0 && c === 0) return `${lote}: indica cuánto sale.`;
-                if (t > num(e.tarimas_disponibles)) return `${lote}: solo hay ${num(e.tarimas_disponibles)} tarimas.`;
-                if (c > num(e.cajas_disponibles)) return `${lote}: solo hay ${num(e.cajas_disponibles)} cajas.`;
-                if (t > 0 && c > 0 && t > c) return `${lote}: ${t} tarimas con ${c} cajas no es posible.`;
-            }
+            if (totalTar === 0) return "Toca las tarimas que suben al camión.";
             if (hayOtroCliente && !confirmaReasignacion) return "Confirma la reasignación de la fruta de otro cliente.";
             return null;
         }
@@ -321,7 +323,6 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
             return null;
         }
 
-        // Confirmar
         for (let i = 0; i < tipoUnidad; i++) {
             if (inspeccion[i].resultado === null) return `Registra la inspección de la caja ${i + 1}.`;
             if (inspeccion[i].resultado === 0) return `La caja ${i + 1} no pasó la inspección: no se carga. Cambia la unidad.`;
@@ -382,11 +383,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
             temperatura_salida: temperatura.trim() === "" ? null : Number(temperatura),
             observaciones: observaciones.trim() || null,
             confirmar_reasignacion: hayOtroCliente && confirmaReasignacion,
-            lineas: elegidos.map((e) => ({
-                id_ocupacion_origen: e.id_ocupacion,
-                cantidad_tarimas: Number(seleccion[e.id_ocupacion].tarimas || 0),
-                cantidad_cajas: Number(seleccion[e.id_ocupacion].cajas || 0)
-            })),
+            id_tarimas: seleccion.map((t) => t.id_tarima),
             transporte: {
                 id_linea_fletera: Number(idLinea),
                 operador: operador.nuevo
@@ -441,6 +438,37 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
 
     const ultimo = paso === PASOS.length - 1;
 
+    const tarjetaTarima = (t: TarimaDespacho) => {
+        const activa = elegidas.has(t.id_tarima);
+        const tipo = t.mixta ? "Mixta" : num(t.cajas) < 40 ? "Incompleta" : "Completa";
+        return (
+            <button
+                key={t.id_tarima}
+                type="button"
+                className={`dt__tarima ${activa ? "dt__tarima--activa" : ""} ${t.de_otro_cliente ? "dt__tarima--otro" : ""}`}
+                onClick={() => alternarTarima(t.id_tarima)}
+                aria-pressed={activa}
+            >
+                <span className="dt__tarima-cabeza">
+                    {activa ? <CheckCircle2 size={16} /> : null}
+                    <strong>Tarima {t.posicion}</strong>
+                    <span className={`chip ${t.mixta ? "chip--ambar" : tipo === "Incompleta" ? "chip--azul" : "chip--gris"}`}>{tipo}</span>
+                </span>
+                <span className="dt__cajas">{num(t.cajas)} cj</span>
+                {t.lotes.map((l) => (
+                    <small key={l.id_produccion}>
+                        {l.codigo_sku} · {num(l.cantidad_cajas)} cj · {l.codigo_finca} {l.nombre_finca}
+                        {t.de_otro_cliente && l.id_cc !== idCc ? ` · ${l.acronimo_cc}` : ""}
+                    </small>
+                ))}
+                <small>
+                    {t.nombre_camara}
+                    {t.ultima_temperatura !== null ? ` · ${num(t.ultima_temperatura)} °C` : ""}
+                </small>
+            </button>
+        );
+    };
+
     // ---- Vista ----
     return (
         <Modal
@@ -471,7 +499,6 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                 </>
             }
         >
-            {/* ---- Pasos ---- */}
             <ol className="asistente__pasos">
                 {PASOS.map((p, i) => (
                     <li
@@ -516,7 +543,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                             onClick={() => {
                                                 if (c.id_cc !== idCc) {
                                                     setIdCc(c.id_cc);
-                                                    setSeleccion({});
+                                                    setElegidas(new Set());
                                                     setTodos(false);
                                                     setConfirmaReasignacion(false);
                                                 }
@@ -540,94 +567,65 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                         </div>
                     )}
 
-                    {/* ======== 2 FRUTA ======== */}
+                    {/* ======== 2 FRUTA (TARIMAS) ======== */}
                     {paso === 1 && (
                         <div className="asistente__cuerpo">
                             <div className="asistente__barra">
                                 <label className="interruptor">
                                     <input type="checkbox" checked={todos} onChange={(e) => setTodos(e.target.checked)} />
-                                    Incluir fruta de otros clientes
+                                    Incluir tarimas de otros clientes
                                 </label>
                                 <span className="chip chip--azul">
-                                    {elegidos.length} proceso(s) · {totalTar} tar · {totalCaj} cj
+                                    {totalTar} tarima(s) · {totalCaj} cj
                                 </span>
                             </div>
+                            <p className="pieza__vacio">Toca las tarimas que suben al camión. Cada tarima sube entera, con lo que lleva.</p>
 
-                            {cargandoStock ? (
+                            {sinBloque.lotes > 0 && (
+                                <div className="alerta alerta--aviso">
+                                    <AlertTriangle size={16} className="icono-en-linea" /> Hay {sinBloque.cajas} cajas de {sinBloque.lotes} lote(s) de
+                                    este cliente sin armar en bloques: ármalas en Bloques y pulpeos para poder despacharlas.
+                                </div>
+                            )}
+
+                            {cargandoTarimas ? (
                                 <div className="crud__vacio">
                                     <div className="spinner" />
                                 </div>
-                            ) : stock.length === 0 ? (
-                                <p className="pieza__vacio">No hay stock para este destino en tus cámaras.</p>
+                            ) : bloques.length === 0 ? (
+                                <p className="pieza__vacio">No hay tarimas armadas para este destino en tus cámaras.</p>
                             ) : (
-                                <div className="asistente__stock">
-                                    {stock.map((p) => {
-                                        const s = seleccion[p.id_ocupacion];
+                                <div className="dt__bloques">
+                                    {bloques.map((b) => {
+                                        const todasDentro = b.tarimas.every((t) => elegidas.has(t.id_tarima));
                                         return (
-                                            <div
-                                                key={p.id_ocupacion}
-                                                className={`stock ${s ? "stock--activo" : ""} ${p.es_de_otro_cliente ? "stock--otro" : ""}`}
-                                            >
-                                                <label className="stock__elegir">
-                                                    <input type="checkbox" checked={Boolean(s)} onChange={() => alternarProceso(p)} />
-                                                    <div>
-                                                        <strong>
-                                                            {p.codigo_productor} {p.codigo_finca} {p.nombre_finca}
-                                                        </strong>
-                                                        <small>
-                                                            <span className="mono">{p.codigo_lote ?? "—"}</span> · {p.codigo_sku}{" "}
-                                                            {p.calidad_sku}
-                                                        </small>
-                                                        <small>
-                                                            {p.nombre_camara} · empaque {p.fecha_empaque ? fechaCorta(p.fecha_empaque) : "—"}
-                                                            {p.es_de_otro_cliente ? ` · planeada para ${p.acronimo_cc ?? p.cliente}` : ""}
-                                                        </small>
-                                                    </div>
-                                                </label>
-                                                <div className="stock__lado">
-                                                    <span className={`chip ${CRITICIDAD[p.nivel_criticidad] ?? "chip--gris"}`}>
-                                                        {p.criticidad_texto}
-                                                    </span>
-                                                    <span>
-                                                        {num(p.tarimas_disponibles)} tar · {num(p.cajas_disponibles)} cj
-                                                    </span>
+                                            <div key={b.id_bloque} className="dt__bloque">
+                                                <div className="dt__bloque-cabeza">
+                                                    <Layers size={16} />
+                                                    <strong className="mono">{b.codigo_bloque}</strong>
+                                                    <small>
+                                                        {b.tarimas.length} tarima(s) disponibles · {b.tarimas[0]?.nombre_camara}
+                                                    </small>
+                                                    <button type="button" className="enlace enlace--verde" onClick={() => alternarBloque(b)}>
+                                                        {todasDentro ? "Quitar todas" : "Todas"}
+                                                    </button>
                                                 </div>
-                                                {s && (
-                                                    <div className="stock__cantidades">
-                                                        <label className="campo">
-                                                            <span>Tarimas que salen</span>
-                                                            <input
-                                                                type="number"
-                                                                inputMode="numeric"
-                                                                min={0}
-                                                                max={num(p.tarimas_disponibles)}
-                                                                value={s.tarimas}
-                                                                onChange={(e) => cambiarCantidad(p, "tarimas", e.target.value)}
-                                                            />
-                                                        </label>
-                                                        <label className="campo">
-                                                            <span>Cajas que salen</span>
-                                                            <input
-                                                                type="number"
-                                                                inputMode="numeric"
-                                                                min={0}
-                                                                max={num(p.cajas_disponibles)}
-                                                                value={s.cajas}
-                                                                onChange={(e) => cambiarCantidad(p, "cajas", e.target.value)}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                )}
+                                                <div className="dt__rejilla">{b.tarimas.map(tarjetaTarima)}</div>
                                             </div>
                                         );
                                     })}
                                 </div>
                             )}
 
+                            {porLote.length > 0 && (
+                                <p className="formulario__nota">
+                                    Suben {totalTar} tarima(s): {porLote.map((l) => `${l.lote} ${l.sku} ${l.cajas} cj`).join(" · ")}
+                                </p>
+                            )}
+
                             {hayOtroCliente && (
                                 <div className="alerta alerta--aviso">
-                                    <AlertTriangle size={16} className="icono-en-linea" /> Elegiste fruta planeada para otro
-                                    cliente.
+                                    <AlertTriangle size={16} className="icono-en-linea" /> Elegiste tarimas con fruta planeada para otro cliente.
                                     <label className="interruptor asistente__confirma">
                                         <input
                                             type="checkbox"
@@ -727,9 +725,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                         className="mono"
                                         maxLength={14}
                                         value={tracto.datos.placas}
-                                        onChange={(e) =>
-                                            setTracto((s) => ({ ...s, datos: { ...s.datos, placas: e.target.value.toUpperCase() } }))
-                                        }
+                                        onChange={(e) => setTracto((s) => ({ ...s, datos: { ...s.datos, placas: e.target.value.toUpperCase() } }))}
                                         autoFocus
                                     />
                                 </label>
@@ -741,10 +737,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                         maxLength={10}
                                         value={tracto.datos.numero_economico}
                                         onChange={(e) =>
-                                            setTracto((s) => ({
-                                                ...s,
-                                                datos: { ...s.datos, numero_economico: e.target.value.toUpperCase() }
-                                            }))
+                                            setTracto((s) => ({ ...s, datos: { ...s.datos, numero_economico: e.target.value.toUpperCase() } }))
                                         }
                                     />
                                 </label>
@@ -827,7 +820,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                 <div>
                                     <small>Carga</small>
                                     <strong>
-                                        {elegidos.length} proceso(s) · {totalTar} tar · {totalCaj} cj
+                                        {totalTar} tarima(s) · {totalCaj} cj
                                     </strong>
                                 </div>
                                 <div>
@@ -860,18 +853,10 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                             Caja {tipoUnidad === 2 ? i + 1 : ""} <span className="mono">{textoCaja(i)}</span>
                                         </strong>
                                         <div className="segmentado">
-                                            <button
-                                                type="button"
-                                                className={ins.resultado === 1 ? "activo" : ""}
-                                                onClick={() => ponerInspeccion(i, { resultado: 1 })}
-                                            >
+                                            <button type="button" className={ins.resultado === 1 ? "activo" : ""} onClick={() => ponerInspeccion(i, { resultado: 1 })}>
                                                 <ShieldCheck size={16} /> Aprobada
                                             </button>
-                                            <button
-                                                type="button"
-                                                className={ins.resultado === 0 ? "activo" : ""}
-                                                onClick={() => ponerInspeccion(i, { resultado: 0 })}
-                                            >
+                                            <button type="button" className={ins.resultado === 0 ? "activo" : ""} onClick={() => ponerInspeccion(i, { resultado: 0 })}>
                                                 <ShieldAlert size={16} /> Rechazada
                                             </button>
                                         </div>
@@ -883,9 +868,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                             placeholder="Observaciones (opcional)"
                                         />
                                         {ins.resultado === 0 && (
-                                            <small className="campo__mensaje">
-                                                Una caja rechazada no se carga. Regresa al paso Unidad y cambia la caja.
-                                            </small>
+                                            <small className="campo__mensaje">Una caja rechazada no se carga. Regresa al paso Unidad y cambia la caja.</small>
                                         )}
                                     </div>
                                 );
@@ -903,13 +886,7 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                 </label>
                                 <label className="campo">
                                     <span>Cita</span>
-                                    <input
-                                        type="text"
-                                        className="mono"
-                                        maxLength={50}
-                                        value={cita}
-                                        onChange={(e) => setCita(e.target.value.toUpperCase())}
-                                    />
+                                    <input type="text" className="mono" maxLength={50} value={cita} onChange={(e) => setCita(e.target.value.toUpperCase())} />
                                 </label>
                                 <label className="campo">
                                     <span>Fecha de cita</span>
@@ -927,28 +904,17 @@ export default function AsistenteDespacho({ onGuardado, onCerrar }: Props) {
                                 </label>
                                 <label className="campo">
                                     <span>Temperatura de salida (°C)</span>
-                                    <input
-                                        type="number"
-                                        inputMode="decimal"
-                                        step="0.1"
-                                        value={temperatura}
-                                        onChange={(e) => setTemperatura(e.target.value)}
-                                    />
+                                    <input type="number" inputMode="decimal" step="0.1" value={temperatura} onChange={(e) => setTemperatura(e.target.value)} />
                                 </label>
                                 <label className="campo campo--completo">
                                     <span>Observaciones</span>
-                                    <input
-                                        type="text"
-                                        maxLength={250}
-                                        value={observaciones}
-                                        onChange={(e) => setObservaciones(e.target.value)}
-                                    />
+                                    <input type="text" maxLength={250} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
                                 </label>
                             </div>
 
                             <p className="asistente__aviso">
-                                <CheckCircle2 size={16} className="icono-en-linea" /> Al confirmar, la fruta se descuenta de las
-                                cámaras y el despacho queda <strong>cerrado</strong>.
+                                <CheckCircle2 size={16} className="icono-en-linea" /> Al confirmar, las tarimas salen de sus bloques, la fruta se
+                                descuenta de las cámaras y el despacho queda <strong>cerrado</strong>.
                             </p>
                         </div>
                     )}

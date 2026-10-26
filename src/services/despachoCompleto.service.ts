@@ -3,14 +3,14 @@ import type {
     ClienteDisponible,
     DespachoCompletoPayload,
     RespuestaDespachoCompleto,
-    StockProceso
+    TarimasDisponibles
 } from "../types/despachoNuevo";
 
 // ============================================================================
 // DESPACHO EN UN PASO · endpoints
 // ============================================================================
 //   GET  /despachos/clientes-disponibles     destinos con fruta en stock
-//   GET  /despachos/inventario?id_cc&todos   stock para ese destino
+//   GET  /despachos/tarimas?id_cc&todos      bloques con sus tarimas
 //   POST /despachos/completo                 registra y CIERRA (operativo+)
 // ============================================================================
 
@@ -19,11 +19,11 @@ export const getClientesDisponibles = async () => {
     return Array.isArray(data) ? data : [];
 };
 
-export const getInventario = async (id_cc: number, todos: boolean) => {
-    const { data } = await api.get<StockProceso[]>("/despachos/inventario", {
+export const getTarimas = async (id_cc: number, todos: boolean) => {
+    const { data } = await api.get<TarimasDisponibles>("/despachos/tarimas", {
         params: todos ? { id_cc, todos: 1 } : { id_cc }
     });
-    return Array.isArray(data) ? data : [];
+    return { bloques: data?.bloques ?? [], sin_bloque: data?.sin_bloque ?? { lotes: 0, cajas: 0 } };
 };
 
 export const confirmarDespacho = async (payload: DespachoCompletoPayload) => {
